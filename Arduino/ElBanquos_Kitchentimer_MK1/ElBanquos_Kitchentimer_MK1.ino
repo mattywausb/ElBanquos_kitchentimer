@@ -1,5 +1,6 @@
 #include <TM1638.h>
 #include "mainSettings.h"
+#include "kitchenTimer.h"   // Class declaration
 
 #ifdef TRACE_ON
 #define TRACE_TIMER 1
@@ -17,17 +18,28 @@ UI_MODES ui_mode = DEMO_MODE;
 
 TM1638 ledAndKeymodule(4, 3, 2);
 
+KitchenTimer myKitchenTimer;
+
 /* *************** IDLE_MODE ***************** */
 void enter_IDLE_MODE(){
   #ifdef TRACE_CLOCK
     Serial.println(F("#IDLE"));
   #endif
   ui_mode=IDLE_MODE;
+  output_clearAllSequence ();
+  myKitchenTimer.setInterval(72);
+  myKitchenTimer.startCounting();
 }
 
 void process_IDLE_MODE()
 {
+  if(input_moduleButtonIsPressed(1)) 
+  {
+    enter_DEMO_MODE();
+    return;
+  }
 
+  output_renderIdleScene(myKitchenTimer,3);
 }
 
 
@@ -68,6 +80,12 @@ void enter_DEMO_MODE(){
 
 void process_DEMO_MODE()
 {
+  if(input_moduleButtonIsPressed(0)) 
+  {
+    enter_IDLE_MODE();
+    return;
+  }
+  
   output_renderDemoScene (input_get_buttonModulePattern()) ;
 }
 
@@ -86,6 +104,7 @@ void setup() {
 
   output_setup(&ledAndKeymodule);
   input_setup(&ledAndKeymodule); /* Encoder Range 24 hoursis,stepping quater hours */
+  
 
 }
 

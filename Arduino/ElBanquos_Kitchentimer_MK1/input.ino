@@ -108,6 +108,10 @@ byte input_get_buttonModulePattern() {
   return buttonModule->getButtons();
 }
 
+bool input_moduleButtonIsPressed(byte buttonIndex) {
+  return bitRead(buttonModule->getButtons(),buttonIndex);
+}
+
 bool input_checkEncoderChangeEvent(){
   return input_encoder_change_event;
 }
