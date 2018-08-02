@@ -6,7 +6,7 @@ When preparing food I have to take track of multiple countdowns. The following s
 * Have multiple "hardware" timers somewere (probably on the fridge door).
 * Use an App on my smartphone (and alway clean your hands before touching it and after touchen it (ieeek))
 
-Both Versions need some improvement, so I build my  optimal timer with the following features:
+When you can't buy it, you can build it, so this is what I will implement:
 
 * Track up to "n" Timers (normally 4, but this limit comes from the amount of buttons and displays to be used)
 * Very easy 2 finger handling of all operations:
