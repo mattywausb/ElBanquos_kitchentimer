@@ -62,6 +62,13 @@ void process_IDLE_MODE()
     myKitchenTimer.setInterval(myKitchenTimer.getTimeLeft()+300); 
   }  
 
+    if(input_moduleButtonIsPressed(2)) 
+  {
+    myKitchenTimer.acknowledgeAlert(); 
+  }  
+
+  if(myKitchenTimer.hasAlert() && myKitchenTimer.getTimeLeft()<-15) myKitchenTimer.acknowledgeAlert(); 
+
   
   output_renderIdleScene(myKitchenTimer);
 }

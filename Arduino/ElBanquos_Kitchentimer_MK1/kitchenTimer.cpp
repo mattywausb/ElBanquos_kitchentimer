@@ -84,13 +84,13 @@ bool KitchenTimer::isOnHold()
 /* check if alert is active */
 bool KitchenTimer::hasAlert()
 {
-  if(alert_enabled) return isOver();
+  if(alert_enabled && isActive()) return isOver();
   return false;
 }
 
 /* aknowledge alert, and deactivate it */
 void KitchenTimer::acknowledgeAlert() 
 {
-  alert_enabled=false;
+  if(hasAlert()) alert_enabled=false;
 }
 

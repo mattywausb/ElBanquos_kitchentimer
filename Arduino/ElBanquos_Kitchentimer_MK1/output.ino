@@ -6,11 +6,18 @@
 #define DISPLAY_ACTIVE true
 #define DISPLAY_INTENSITY 3
 
-#define BLINKCYCLE_1xSEC 1
-#define BLINKCYCLE_2xSEC 2
-#define BLINKCYCLE_FOCUS 3
+#define BLINKCYCLE_FOCUS 1
+#define BLINKCYCLE_1xSEC 2
+#define BLINKCYCLE_2xSEC 3
+#define BLINKCYCLE_1x2SEC 4
+#define BLINKCYCLE_HOLD 5
+#define BLINKCYCLE_15to5 6
+
 #define BLINKSTATE(blinkcycle) bitRead(output_blinkCycleFlags,blinkcycle)
+
 byte output_blinkCycleFlags=0;
+
+byte output_ledPattern=0;
 
 TM1638 *ledModule;
 
@@ -21,7 +28,8 @@ void output_renderIdleScene(KitchenTimer myKitchenTimer) {
   determineBlinkCycles(); 
   // TODO: Wrap a loop around this to iterate over timers 
   renderCompactTimer(myKitchenTimer,6);  
-  // TODO: renderTimerLed(myKitchenTimer);
+  setLedBitByTimerStatus(myKitchenTimer,6);
+  ledModule->setLEDs(output_ledPattern);
 }
 
 /* ************ Demo scene *************************** */
@@ -53,10 +61,13 @@ void output_clearAllSequence ()
 
 void determineBlinkCycles()
 {
-   unsigned long frameTime=millis();  /* Freeze time for consistent blink picture */
-   bitWrite(output_blinkCycleFlags,BLINKCYCLE_FOCUS,(frameTime/70)%2);
-   bitWrite(output_blinkCycleFlags,BLINKCYCLE_2xSEC,(frameTime/250)%2);
-   bitWrite(output_blinkCycleFlags,BLINKCYCLE_1xSEC,(frameTime/500)%2);
+   byte frame=(millis()/125)%16;  /* Create 8fps framenumber, 1 bit in pattern = 1/8 second */
+   bitWrite(output_blinkCycleFlags,BLINKCYCLE_FOCUS,(0x5555>>frame)&0x0001);
+   bitWrite(output_blinkCycleFlags,BLINKCYCLE_2xSEC,(0x3333>>frame)&0x0001);
+   bitWrite(output_blinkCycleFlags,BLINKCYCLE_1xSEC,(0x0f0f>>frame)&0x0001);
+   bitWrite(output_blinkCycleFlags,BLINKCYCLE_1x2SEC,(0x00ff>>frame)&0x0001);
+   bitWrite(output_blinkCycleFlags,BLINKCYCLE_HOLD,(0xffee>>frame)&0x0001);
+   bitWrite(output_blinkCycleFlags,BLINKCYCLE_15to5,(0x0fff>>frame)&0x0001);  
 }
 
 void renderCompactTimer(KitchenTimer myKitchenTimer, byte startSegment) {
@@ -66,12 +77,28 @@ void renderCompactTimer(KitchenTimer myKitchenTimer, byte startSegment) {
 
    bool withDot=false;
 
-   if(myKitchenTimer.isOver() && BLINKSTATE(BLINKCYCLE_1xSEC)) 
+   if(!myKitchenTimer.isActive()   // 
+      ||(!myKitchenTimer.isOver() && myKitchenTimer.isOnHold() &&!BLINKSTATE(BLINKCYCLE_HOLD))
+      )
    {
       ledModule->clearDisplayDigit(startSegment,false);
       ledModule->clearDisplayDigit(startSegment+1,false);
-      return;
+      return;   
    }
+
+   if( myKitchenTimer.isOver()) {
+     if(myKitchenTimer.hasAlert()  && BLINKSTATE(BLINKCYCLE_2xSEC)) {
+        ledModule->setDisplayToString("--",0,startSegment);    
+        return;      
+     }
+     if(!myKitchenTimer.hasAlert()&& ! BLINKSTATE(BLINKCYCLE_1x2SEC) ) 
+     {
+      ledModule->clearDisplayDigit(startSegment,false);
+      ledModule->clearDisplayDigit(startSegment+1,false);
+      return;
+      }
+   }
+
 
    if(currentTime>=36000)  // 10 Hour display mode
    { 
@@ -89,7 +116,7 @@ void renderCompactTimer(KitchenTimer myKitchenTimer, byte startSegment) {
    if(currentTime>=600)  // Minute display mode
    { 
       ledModule->setDisplayDigit(currentTime/600,startSegment,false);
-      ledModule->setDisplayDigit(currentTime/60,startSegment+1,true);
+      ledModule->setDisplayDigit((currentTime/60)%10,startSegment+1,true);
       return;  
    }
 
@@ -102,6 +129,32 @@ void renderCompactTimer(KitchenTimer myKitchenTimer, byte startSegment) {
    // last seconds
    sprintf(s, "%2d", abs(currentTime));
    ledModule->setDisplayToString(s,0,startSegment);
+}
+
+/* Prepere the bits for the led bar accordingly */
+void setLedBitByTimerStatus(KitchenTimer theKitchenTimer, byte ledIndex) {
+
+   if(!myKitchenTimer.isActive()   
+      ||(!theKitchenTimer.isOver() && theKitchenTimer.isOnHold() &&!BLINKSTATE(BLINKCYCLE_HOLD))
+      )
+   {
+       bitClear(output_ledPattern,ledIndex);
+      return;   
+   }
+
+   if( theKitchenTimer.isOver()) 
+   {
+     if(theKitchenTimer.hasAlert()  && BLINKSTATE(BLINKCYCLE_2xSEC)) {
+         bitClear(output_ledPattern,ledIndex);   
+        return;      
+     }
+     if(!theKitchenTimer.hasAlert()&& ! (BLINKSTATE(BLINKCYCLE_1x2SEC)) ) 
+     {
+      bitClear(output_ledPattern,ledIndex);
+      return;
+      }
+   }   
+   bitSet(output_ledPattern,ledIndex);
 }
 
 
