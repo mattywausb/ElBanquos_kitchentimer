@@ -2,7 +2,7 @@
 An Arduino based multitimer, optimized for tracking times during food preparation
 
 # Motivation
-When preparing food I have to take track of multiple countdowns. The following had been available:
+When preparing food I have to take track of multiple countdowns. The following solution have some drawbacks:
 * Have multiple "hardware" timers somewere (probably on the fridge door).
 * Use an App on my smartphone (and alway clean your hands before touching it and after touchen it (ieeek))
 
