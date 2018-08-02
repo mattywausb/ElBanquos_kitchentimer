@@ -39,7 +39,31 @@ void process_IDLE_MODE()
     return;
   }
 
-  output_renderIdleScene(myKitchenTimer,3);
+  if(input_moduleButtonIsPressed(5)) 
+  {
+    if(myKitchenTimer.isOnHold()) myKitchenTimer.startCounting();
+    else myKitchenTimer.stopCounting();
+  }
+
+  if(input_moduleButtonIsPressed(6)) 
+  {
+    myKitchenTimer.setInterval(myKitchenTimer.getTimeLeft()-15); 
+  }  
+  if(input_moduleButtonIsPressed(7)) 
+  {
+    myKitchenTimer.setInterval(myKitchenTimer.getTimeLeft()-60); 
+  }  
+  if(input_moduleButtonIsPressed(4)) 
+  {
+    myKitchenTimer.setInterval(myKitchenTimer.getTimeLeft()+60); 
+  }  
+  if(input_moduleButtonIsPressed(3)) 
+  {
+    myKitchenTimer.setInterval(myKitchenTimer.getTimeLeft()+300); 
+  }  
+
+  
+  output_renderIdleScene(myKitchenTimer);
 }
 
 

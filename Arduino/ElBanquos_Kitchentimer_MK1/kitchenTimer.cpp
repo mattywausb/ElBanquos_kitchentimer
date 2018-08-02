@@ -1,7 +1,7 @@
  #include "Arduino.h"
  #include "kitchenTimer.h"
  
-
+#define TRACE_KITCHENTIMER
 
 #define ALERT_ENABLED 1
 #define ALERT_ACTIVE 2
@@ -42,8 +42,13 @@ void KitchenTimer::startCounting()
 /* stop the timer */
 void KitchenTimer::stopCounting()
 {
-  tracked_interval=(millis()-reference_time)/1000;
+  tracked_interval=tracked_interval-(millis()-reference_time)/1000;
   reference_time=0;
+
+  #ifdef TRACE_KITCHENTIMER
+    Serial.print(F("KT.StopCounting:"));
+    Serial.println(tracked_interval);
+  #endif
 }
 
 /* get the interval value from the last set call */

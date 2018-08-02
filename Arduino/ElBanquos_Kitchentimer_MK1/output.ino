@@ -9,8 +9,8 @@
 #define BLINKCYCLE_1xSEC 1
 #define BLINKCYCLE_2xSEC 2
 #define BLINKCYCLE_FOCUS 3
-#define BLINKSTATE(blinkcycle) bitRead(output_blinkCylcleFlags,blinkcycle)
-byte output_blinkCylcleFlags=0;
+#define BLINKSTATE(blinkcycle) bitRead(output_blinkCycleFlags,blinkcycle)
+byte output_blinkCycleFlags=0;
 
 TM1638 *ledModule;
 
@@ -51,37 +51,57 @@ void output_clearAllSequence ()
 
 /* **************** internal helper funtions **************/
 
-voic determineBlinkCycles()
+void determineBlinkCycles()
 {
    unsigned long frameTime=millis();  /* Freeze time for consistent blink picture */
-   bitWrite(output_blinkCycleFlags,BLINKCYCLE_FOCUS,(frameTime/70)%2;
-   bitWrite(output_blinkCycleFlags,BLINKCYCLE_2xSEC,(frameTime/250)%2;
-   bitWrite(output_blinkCycleFlags,BLINKCYCLE_1xSEC,(frameTime/500)%2;
+   bitWrite(output_blinkCycleFlags,BLINKCYCLE_FOCUS,(frameTime/70)%2);
+   bitWrite(output_blinkCycleFlags,BLINKCYCLE_2xSEC,(frameTime/250)%2);
+   bitWrite(output_blinkCycleFlags,BLINKCYCLE_1xSEC,(frameTime/500)%2);
 }
 
-void renderIdleSceneTimer(KitchenTimer myKitchenTimer, byte startSegment,byte blinkCycleFlags) {
+void renderCompactTimer(KitchenTimer myKitchenTimer, byte startSegment) {
 
    char s[8];
    long currentTime=abs(myKitchenTimer.getTimeLeft());
 
    bool withDot=false;
 
-   if(currentTime>0 || BLINKSTATE(BLINKCYCLE_2xSEC))
-
-     if(currentTime>=600) {
-
-     if(currentTime>59) {
-      ledModule->setDisplayDigit(currentTime/60,startSegment, currentTime<0||BLINKSTATE(BLINKCYCLE_2xSEC));
-      ledModule->setDisplayDigit((currentTime%60)/10,startSegment+1,false);
-      return;
-     }
-    {
-        sprintf(s, "%2d", abs(currentTime));
-        ledModule->setDisplayToString(s,0,startSegment);
-   } else {
+   if(myKitchenTimer.isOver() && BLINKSTATE(BLINKCYCLE_1xSEC)) 
+   {
       ledModule->clearDisplayDigit(startSegment,false);
       ledModule->clearDisplayDigit(startSegment+1,false);
+      return;
    }
+
+   if(currentTime>=36000)  // 10 Hour display mode
+   { 
+      ledModule->setDisplayToString("Lh",0,startSegment);    
+      return;  
+   }
+   
+   if(currentTime>=3600)  // Hour display mode
+   { 
+      sprintf(s, "h%d", currentTime/3600);
+      ledModule->setDisplayToString(s,0,startSegment);    
+      return;  
+   }
+   
+   if(currentTime>=600)  // Minute display mode
+   { 
+      ledModule->setDisplayDigit(currentTime/600,startSegment,false);
+      ledModule->setDisplayDigit(currentTime/60,startSegment+1,true);
+      return;  
+   }
+
+   if(currentTime>59) {
+    ledModule->setDisplayDigit(currentTime/60,startSegment, true);
+    ledModule->setDisplayDigit((currentTime%60)/10,startSegment+1,false);
+    return;
+   }
+   
+   // last seconds
+   sprintf(s, "%2d", abs(currentTime));
+   ledModule->setDisplayToString(s,0,startSegment);
 }
 
 

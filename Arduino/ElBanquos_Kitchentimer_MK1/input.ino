@@ -109,7 +109,9 @@ byte input_get_buttonModulePattern() {
 }
 
 bool input_moduleButtonIsPressed(byte buttonIndex) {
-  return bitRead(buttonModule->getButtons(),buttonIndex);
+  bool result=bitRead(buttonModule->getButtons(),buttonIndex);
+  if(result) delay(600); // convert to primitive Pressed event every 600 ms
+  return result;
 }
 
 bool input_checkEncoderChangeEvent(){
@@ -228,6 +230,11 @@ void input_switches_scan_tick() {  /* After every tick, especially the flank eve
   /* copy processed debounce state to history bits */
   tick_state=(tick_state&INPUT_CURRENT_BITS)<<1
                  |(debounced_state&INPUT_CURRENT_BITS);
+
+  #ifdef TRACE_INPUT
+  byte test = input_get_buttonModulePattern();
+  if(test) Serial.println(test,BIN);
+  #endif
  
   
 } // void input_switches_tick()
