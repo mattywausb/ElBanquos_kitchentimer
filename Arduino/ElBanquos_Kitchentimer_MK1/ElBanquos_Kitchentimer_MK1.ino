@@ -197,24 +197,37 @@ void process_DEMO_MODE()
 
 long convertControlvalueToTime(long value)
 {
-if (value<60) return value;  // First Minute step 1 s   
-if (value<96) return 60+(value-60)*15;  // Until h 10min Step 0,25 min
-if (value<116) return 600+(value-96)*60;  // Until h 30min Step 1 min
-if (value<128) return 1800+(value-116)*150; // Until h 60min Step 2,5 min
-if (value<148) return 3600+(value-128)*900; // Until 6h min Step 15 min
-if (value<184) return 21600+(value-148)*1800; // Until 24h min Step 30 min
-return 86400+(value-184)*3600; //Step 60 min
+/* this is generated with a google sheet, dont ask for explanation */  
+if(value==NO_TIME_SELECTION) return NO_TIME_SELECTION;  
+if (value<30) return value;  // First step 1 s  
+if (value<48) return 30+(value-30)*5; // Until h 2min Step 0,0833333333333333 min
+if (value<66) return 120+(value-48)*10; // Until h 5min Step 0,166666666666667 min
+if (value<86) return 300+(value-66)*15; // Until h 10min Step 0,25 min
+if (value<126) return 600+(value-86)*30;  // Until h 30min Step 0,5 min
+if (value<156) return 1800+(value-126)*60;  // Until 1h min Step 1 min
+if (value<180) return 3600+(value-156)*300; // Until 3h 0min Step 5 min
+if (value<198) return 10800+(value-180)*600;  // Until 6h 0min Step 10 min
+if (value<246) return 21600+(value-198)*900;  // Until 12h min Step 15 min
+if (value<294) return 43200+(value-246)*1800; // Until 24h min Step 30 min
+if (value<342) return 86400+(value-294)*3600; // Until 48h min Step 60 min
+return 172800+(value-342)*10800;  // infinity Step 180 min
 }
 
 long convertTimeToControlvalue(long totalSeconds)
 {
-if(totalSeconds<60) return totalSeconds;
-if(totalSeconds<600) return (totalSeconds-60)/15+60;
-if(totalSeconds<1800) return (totalSeconds-600)/60+96;
-if(totalSeconds<3600) return (totalSeconds-1800)/150+116;
-if(totalSeconds<21600) return (totalSeconds-3600)/900+128;
-if(totalSeconds<86400) return (totalSeconds-21600)/1800+148;
-return (totalSeconds-86400)/3600+184;
+/* this is generated with a google sheet, dont ask for explanation */
+if(totalSeconds<30) return totalSeconds;
+if(totalSeconds<120) return (totalSeconds-30)/5+30;
+if(totalSeconds<300) return (totalSeconds-120)/10+48;
+if(totalSeconds<600) return (totalSeconds-300)/15+66;
+if(totalSeconds<1800) return (totalSeconds-600)/30+86;
+if(totalSeconds<3600) return (totalSeconds-1800)/60+126;
+if(totalSeconds<10800) return (totalSeconds-3600)/300+156;
+if(totalSeconds<21600) return (totalSeconds-10800)/600+180;
+if(totalSeconds<43200) return (totalSeconds-21600)/900+198;
+if(totalSeconds<86400) return (totalSeconds-43200)/1800+246;
+if(totalSeconds<172800) return (totalSeconds-86400)/3600+294;
+return (totalSeconds-172800)/10800+342;
 }
 
  #ifdef TRACE_ON 
@@ -252,7 +265,7 @@ void setup() {
   long timevalue;
   long controlvalue;
   
-  for(long i=0;i<215;i++) {
+  for(long i=0;i<312;i++) {
     timevalue=convertControlvalueToTime(i);
     controlvalue=convertTimeToControlvalue(timevalue);
     Serial.print(i);
