@@ -27,8 +27,26 @@ void output_renderIdleScene(KitchenTimer myKitchenTimer) {
 
   determineBlinkCycles(); 
   // TODO: Wrap a loop around this to iterate over timers 
-  renderCompactTimer(myKitchenTimer,6);  
-  setLedBitByTimerStatus(myKitchenTimer,6);
+  renderTimerCompact(myKitchenTimer,6);  
+  setLedBitByTimerStatus(myKitchenTimer,7);
+  ledModule->setLEDs(output_ledPattern);
+}
+
+/* ************ Set scene *************************** */
+
+void output_renderSetScene(KitchenTimer myKitchenTimer,long selected_time, byte targetTimer) {
+  byte cycle=(millis()/100)%8; // cycle from 0 to 8, stepping in 1/10s
+  byte startSegment=targetTimer*2;
+  determineBlinkCycles(); 
+
+  if(selected_time!=NO_TIME_SELECTION) renderTimeCompact(selected_time, startSegment);
+  else renderTimerCompact(myKitchenTimer,startSegment);
+  
+  // for all not targets  setLedBitByTimerStatus(myKitchenTimer,6);
+   
+  
+  // TODO: Wrap a loop around this to iterate over timers 
+  bitWrite(output_ledPattern,startSegment+1,BLINKSTATE(BLINKCYCLE_FOCUS)); 
   ledModule->setLEDs(output_ledPattern);
 }
 
@@ -70,13 +88,13 @@ void determineBlinkCycles()
    bitWrite(output_blinkCycleFlags,BLINKCYCLE_15to5,(0x0fff>>frame)&0x0001);  
 }
 
-void renderCompactTimer(KitchenTimer myKitchenTimer, byte startSegment) {
 
-   char s[8];
+void renderTimerCompact(KitchenTimer myKitchenTimer, byte startSegment) {
+
+
    long currentTime=abs(myKitchenTimer.getTimeLeft());
 
-   bool withDot=false;
-
+   /* manage state specifc blinking */
    if(!myKitchenTimer.isActive()   // 
       ||(!myKitchenTimer.isOver() && myKitchenTimer.isOnHold() &&!BLINKSTATE(BLINKCYCLE_HOLD))
       )
@@ -98,8 +116,13 @@ void renderCompactTimer(KitchenTimer myKitchenTimer, byte startSegment) {
       return;
       }
    }
+   /* when here, we are allowed to show the time */
+   renderTimeCompact(abs(myKitchenTimer.getTimeLeft()),startSegment);
+}
 
-
+void renderTimeCompact(long currentTime,byte startSegment)
+{
+   char s[8];
    if(currentTime>=36000)  // 10 Hour display mode
    { 
       ledModule->setDisplayToString("Lh",0,startSegment);    

@@ -7,8 +7,17 @@
 #define ALERT_ACTIVE 2
 #define ALERT_DISABLED 0
 
-/* Create a KitchenTimer */
+/* ------------- Creation  -------------- */
+
+
 KitchenTimer::KitchenTimer(void)
+{  
+       disable();
+}
+
+/* ------------- Operations  -------------- */
+
+void KitchenTimer::disable(void)
 {  
        reference_time=0;   
        original_interval=0; 
@@ -23,20 +32,19 @@ void KitchenTimer::setInterval(long new_interval)
   tracked_interval=new_interval;
   if(reference_time!=0) reference_time=millis();
   alert_enabled=true;
-}
-
-/* get the time left over. (will be negative when time is over, will be 0 if timer is off ) */
-long KitchenTimer::getTimeLeft()
-{
-  if(tracked_interval==0) return 0;
-  if(reference_time==0) return tracked_interval;
-  return tracked_interval-(millis()-reference_time)/1000;
+  #ifdef TRACE_KITCHENTIMER
+    Serial.print(F("KT::setInterval:"));Serial.println(new_interval);
+  #endif
 }
 
 /* start the timer,  */
 void KitchenTimer::startCounting()
 {
   reference_time=millis();  
+  #ifdef TRACE_KITCHENTIMER
+    Serial.print(F("KT::startCounting:"));
+    Serial.println(tracked_interval);
+  #endif
 }
 
 /* stop the timer */
@@ -46,10 +54,34 @@ void KitchenTimer::stopCounting()
   reference_time=0;
 
   #ifdef TRACE_KITCHENTIMER
-    Serial.print(F("KT.StopCounting:"));
+    Serial.print(F("KT::StopCounting:"));
     Serial.println(tracked_interval);
   #endif
 }
+
+/* aknowledge alert, and deactivate it */
+void KitchenTimer::acknowledgeAlert() 
+{
+  if(hasAlert()) 
+  {
+    alert_enabled=false;
+    #ifdef TRACE_KITCHENTIMER
+      Serial.print(F("KT::acknowledgeAlert"));
+      Serial.println(tracked_interval);
+    #endif
+  }
+}
+
+/* ------------- State information -------------- */
+
+/* get the time left over. (will be negative when time is over, will be 0 if timer is off ) */
+long KitchenTimer::getTimeLeft()
+{
+  if(tracked_interval==0) return 0;
+  if(reference_time==0) return tracked_interval;
+  return tracked_interval-(millis()-reference_time)/1000;
+}
+
 
 /* get the interval value from the last set call */
 void KitchenTimer::getLastSetTime()
@@ -88,9 +120,4 @@ bool KitchenTimer::hasAlert()
   return false;
 }
 
-/* aknowledge alert, and deactivate it */
-void KitchenTimer::acknowledgeAlert() 
-{
-  if(hasAlert()) alert_enabled=false;
-}
 

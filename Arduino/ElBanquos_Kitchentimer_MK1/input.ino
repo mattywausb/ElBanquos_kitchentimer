@@ -101,6 +101,14 @@ byte input_selectGotPressed() {
  #ifdef TRACE_INPUT
    if((tick_state&INPUT_BUTTON_A_BITS)==INPUT_BUTTON_A_PRESSED_PATTERN) Serial.println(F("select got pressed"));
  #endif
+
+  // --- Mockup until we have the select encoder in place
+  bool result=bitRead(buttonModule->getButtons(),0);
+  if(result) {delay(1200); return true;} // convert to primitive Pressed event every 600 ms
+  return false;
+  // --- End of Mockup
+  
+ 
  return (tick_state&INPUT_BUTTON_A_BITS)==INPUT_BUTTON_A_PRESSED_PATTERN; ; /* We switched from unpressed to pressed */;
 }
 

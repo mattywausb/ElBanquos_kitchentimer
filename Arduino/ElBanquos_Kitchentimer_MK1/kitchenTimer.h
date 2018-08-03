@@ -16,17 +16,28 @@ class KitchenTimer
      */
      KitchenTimer(void);
 
-     /* Give the Timer a new value to count down from, (will reset alert) */
+     /* ---- Operations ---- */
+
+     /* Give the Timer a new value to count down from, (will enable alert) */
      void setInterval(long);
-
-     /* get the time left over. (will be negative when time is over ) */
-     long getTimeLeft();
-
+     
      /* start the timer,  */
      void startCounting();
 
      /* stop the timer */
      void stopCounting();
+
+     /* aknowledge alert, and deactivate it */
+     void acknowledgeAlert();
+
+     /* Switch the timer off */
+     void disable();
+
+
+     /* ---- State information ----*/
+     
+     /* get the time left over. (will be negative when time is over ) */
+     long getTimeLeft();
 
      /* get the interval value from the last set call */
      void getLastSetTime();
@@ -43,13 +54,10 @@ class KitchenTimer
      /* check if timer in Hold mode */
      bool isOnHold();
 
-
      /* check if alert is active */
      bool hasAlert();
 
-     /* aknowledge alert, and deactivate it */
-     void acknowledgeAlert();
-
+ 
   protected:
      unsigned long reference_time;   // Reference time to get own position in time (0=on hold)  
      long original_interval; // the interval set originally 
