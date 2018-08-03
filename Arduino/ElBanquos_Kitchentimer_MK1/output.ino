@@ -3,6 +3,10 @@
 
 #include <TM1638.h>
 
+#ifdef TRACE_ON
+#define TRACE_OUTPUT_SEQUENCE
+#endif
+
 #define DISPLAY_ACTIVE true
 #define DISPLAY_INTENSITY 3
 
@@ -37,15 +41,13 @@ void output_renderIdleScene(KitchenTimer myKitchenTimer) {
 void output_renderSetScene(KitchenTimer myKitchenTimer,long selected_time, byte targetTimer) {
   byte cycle=(millis()/100)%8; // cycle from 0 to 8, stepping in 1/10s
   byte startSegment=targetTimer*2;
+  
   determineBlinkCycles(); 
 
-  if(selected_time!=NO_TIME_SELECTION) renderTimeCompact(selected_time, startSegment);
-  else renderTimerCompact(myKitchenTimer,startSegment);
+  if(selected_time!=NO_TIME_SELECTION) renderTimeLong(selected_time);
+  else renderTimeLong(myKitchenTimer.getTimeLeft());
   
-  // for all not targets  setLedBitByTimerStatus(myKitchenTimer,6);
-   
-  
-  // TODO: Wrap a loop around this to iterate over timers 
+  // TODO: Wrap a loop around this to iterate over timers for all other led's 
   bitWrite(output_ledPattern,startSegment+1,BLINKSTATE(BLINKCYCLE_FOCUS)); 
   ledModule->setLEDs(output_ledPattern);
 }
@@ -70,8 +72,11 @@ void output_renderDemoScene (byte buttonPattern) {
 
 void output_clearAllSequence ()
 {
-   ledModule->clearDisplay();
-   ledModule->setLEDs(0);
+  ledModule->clearDisplay();
+  ledModule->setLEDs(0);
+  #ifdef TRACE_OUTPUT_SEQUENCE
+    Serial.println(F("!ouput_clearAllSequence"));  
+  #endif
   
 }
 
@@ -129,15 +134,23 @@ void renderTimerCompact(KitchenTimer myKitchenTimer, byte startSegment) {
 void renderTimeCompact(long currentTime,byte startSegment)
 {
    char s[8];
+   if(currentTime>=86400)  // day display mode
+   { 
+      sprintf(s, "%dd", currentTime/86400);
+      ledModule->setDisplayToString(s,0,startSegment);    
+      return;  
+   }
+   
    if(currentTime>=36000)  // 10 Hour display mode
    { 
-      ledModule->setDisplayToString("Lh",0,startSegment);    
+      sprintf(s, "H%d", currentTime/36000);
+      ledModule->setDisplayToString(s,0,startSegment);    
       return;  
    }
    
    if(currentTime>=3600)  // Hour display mode
    { 
-      sprintf(s, "h%d", currentTime/3600);
+      sprintf(s, "%dh", currentTime/3600);
       ledModule->setDisplayToString(s,0,startSegment);    
       return;  
    }
@@ -159,6 +172,25 @@ void renderTimeCompact(long currentTime,byte startSegment)
    sprintf(s, "%2d", abs(currentTime));
    ledModule->setDisplayToString(s,0,startSegment);
 }
+
+
+
+void renderTimeLong(long currentTime)
+{
+   char s[9];
+   currentTime=abs(currentTime);
+   if(currentTime<86400)  {// below 24 Hour display mode hh"H"mm.ss
+      sprintf(s, " %2ldh%02ld%02ld", (currentTime/3600)%24,(currentTime/60)%60,currentTime%60);
+      ledModule->setDisplayToString(s,B00000100,0);    
+        return;  
+   }
+
+   sprintf(s, "%ldd%2dh%02d'", (currentTime/86400)%24,(currentTime/3600)%24,(currentTime/60)%60);
+   ledModule->setDisplayToString(s,B00000100,0);    
+   return;  
+
+}
+
 
 /* Prepere the bits for the led bar accordingly */
 void setLedBitByTimerStatus(KitchenTimer theKitchenTimer, byte ledIndex) {

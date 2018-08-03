@@ -7,7 +7,7 @@
 #define DEBUG_SETTING_1 1
 #endif
 
-#define DEFAULT_INTERVAL 600
+#define DEFAULT_INTERVAL 600   // !0 Minutes
 #define TIMER_MAX_INTERVAL 603800  // Seconds of 7 days
 #define UI_FALLBACK_INTERVAL 10000
 
@@ -28,7 +28,7 @@ enum UI_MODES {
 UI_MODES ui_mode = DEMO_MODE; 
 
 byte ui_focussed_timer=0;
-long ui_selected_time=300;
+long ui_control_value=96; // 10 Minutes
 
 
 #define __button_of_focussed_timer (ui_focussed_timer*2)+1
@@ -89,18 +89,19 @@ void enter_SET_MODE(byte targetTimer,long preselected_time){
     Serial.println(F("#SET_MODE"));
   #endif
   ui_focussed_timer=targetTimer;
-  ui_selected_time=preselected_time;
+  ui_control_value=convertTimeToControlvalue(preselected_time);
   if(preselected_time==NO_TIME_SELECTION
      && !myKitchenTimer.isActive()) {
-            ui_selected_time=DEFAULT_INTERVAL;
+            ui_control_value=convertTimeToControlvalue(DEFAULT_INTERVAL);
             }    
   ui_mode=SET_MODE;
+  output_clearAllSequence ();
 }
 
 void process_SET_MODE()
 {
    if(input_selectGotPressed()) {
-     if(ui_selected_time!=NO_TIME_SELECTION) myKitchenTimer.setInterval(ui_selected_time);
+     if(ui_control_value!=NO_TIME_SELECTION) myKitchenTimer.setInterval(convertControlvalueToTime(ui_control_value));
      myKitchenTimer.startCounting();
      enter_IDLE_MODE();
      return;
@@ -109,7 +110,7 @@ void process_SET_MODE()
   if(input_moduleButtonGotPressed(__button_of_focussed_timer) )
   {
     
-    if(ui_selected_time==NO_TIME_SELECTION) { //there was no selection change 
+    if(ui_control_value==NO_TIME_SELECTION) { //there was no selection change 
       if(myKitchenTimer.isOver()) {       
         myKitchenTimer.disable();
         enter_IDLE_MODE();
@@ -127,7 +128,7 @@ void process_SET_MODE()
       enter_IDLE_MODE();
       return;
     } else {  // Time was changed
-      myKitchenTimer.setInterval(ui_selected_time);
+      myKitchenTimer.setInterval(convertControlvalueToTime(ui_control_value));
       myKitchenTimer.startCounting();
       enter_IDLE_MODE();
       return;
@@ -137,30 +138,31 @@ void process_SET_MODE()
   if(input_moduleButtonGotPressed(5)) // Mockup other Button pressed
   {
     enter_IDLE_MODE();
+    return;
   }
 
   if(input_moduleButtonGotPressed(MOCKUP_MINUS_BUTTON)) 
   {
-    if(ui_selected_time==NO_TIME_SELECTION)
-      if(myKitchenTimer.hasAlert()) ui_selected_time=0;
-      else ui_selected_time=myKitchenTimer.getTimeLeft();
+    if(ui_control_value==NO_TIME_SELECTION)
+      if(myKitchenTimer.hasAlert()) ui_control_value=0;
+      else ui_control_value=convertTimeToControlvalue(myKitchenTimer.getTimeLeft());
       
-    ui_selected_time -= 15;
-    if(ui_selected_time<0) ui_selected_time=0;
+    ui_control_value--;
+    if(ui_control_value<0) ui_control_value=0;
   }  
   
   if(input_moduleButtonGotPressed(MOCKUP_PLUS_BUTTON)) 
   {
-    if(ui_selected_time==NO_TIME_SELECTION)
-      if(myKitchenTimer.hasAlert()) ui_selected_time=0;
-      else ui_selected_time=myKitchenTimer.getTimeLeft();
+    if(ui_control_value==NO_TIME_SELECTION)
+      if(myKitchenTimer.hasAlert()) ui_control_value=0;
+      else ui_control_value=convertTimeToControlvalue(myKitchenTimer.getTimeLeft());
       
-    ui_selected_time += 15;
-    if(ui_selected_time>TIMER_MAX_INTERVAL) ui_selected_time=TIMER_MAX_INTERVAL;
+    ui_control_value++;
+    if(ui_control_value>TIMER_MAX_INTERVAL) ui_control_value=TIMER_MAX_INTERVAL;
   }  
 
   
-  output_renderSetScene(myKitchenTimer,ui_selected_time,ui_focussed_timer);
+  output_renderSetScene(myKitchenTimer,convertControlvalueToTime(ui_control_value),ui_focussed_timer);
 }
 
 /* *************** DEMO_MODE ***************** */
@@ -188,8 +190,45 @@ void process_DEMO_MODE()
   
   output_renderDemoScene (input_get_buttonModulePattern()) ;
 }
+/* ************************************************************
+ *     Helpers
+ * ************************************************************
+ */
 
+long convertControlvalueToTime(long value)
+{
+if (value<60) return value;  // First Minute step 1 s   
+if (value<96) return 60+(value-60)*15;  // Until h 10min Step 0,25 min
+if (value<116) return 600+(value-96)*60;  // Until h 30min Step 1 min
+if (value<128) return 1800+(value-116)*150; // Until h 60min Step 2,5 min
+if (value<148) return 3600+(value-128)*900; // Until 6h min Step 15 min
+if (value<184) return 21600+(value-148)*1800; // Until 24h min Step 30 min
+return 86400+(value-184)*3600; //Step 60 min
+}
 
+long convertTimeToControlvalue(long totalSeconds)
+{
+if(totalSeconds<60) return totalSeconds;
+if(totalSeconds<600) return (totalSeconds-60)/15+60;
+if(totalSeconds<1800) return (totalSeconds-600)/60+96;
+if(totalSeconds<3600) return (totalSeconds-1800)/150+116;
+if(totalSeconds<21600) return (totalSeconds-3600)/900+128;
+if(totalSeconds<86400) return (totalSeconds-21600)/1800+148;
+return (totalSeconds-86400)/3600+184;
+}
+
+ #ifdef TRACE_ON 
+void trace_printTime(long timeValue)
+{
+    Serial.print((timeValue/86400));
+    Serial.print(F("d "));
+    Serial.print((timeValue/3600)%24);
+    Serial.print(F(":"));
+    Serial.print((timeValue/60)%60);
+    Serial.print(F(":"));
+    Serial.print(timeValue%60);  
+}
+#endif
 
 /* ************************************************************
  *     Main Setup
@@ -205,9 +244,28 @@ void setup() {
   #endif
 
   output_setup(&ledAndKeymodule);
-  input_setup(&ledAndKeymodule); /* Encoder Range 24 hoursis,stepping quater hours */
+  input_setup(&ledAndKeymodule); 
 
 
+  #ifdef TRACE_ON 
+  /* Test of stepconversion */
+  long timevalue;
+  long controlvalue;
+  
+  for(long i=0;i<215;i++) {
+    timevalue=convertControlvalueToTime(i);
+    controlvalue=convertTimeToControlvalue(timevalue);
+    Serial.print(i);
+    Serial.print(F(" - "));
+    Serial.print(controlvalue);
+    Serial.print(F("\t = "));
+    trace_printTime(timevalue);
+    Serial.print(F("\t > "));
+    trace_printTime(convertControlvalueToTime(controlvalue));
+    Serial.println();
+  }
+
+  #endif
 
 }
 
