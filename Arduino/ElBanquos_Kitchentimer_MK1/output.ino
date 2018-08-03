@@ -24,6 +24,9 @@ byte output_blinkCycleFlags=0;
 byte output_ledPattern=0;
 
 TM1638 *ledModule;
+/*  ************************  scenes  ***********************************
+ *  *********************************************************************
+ */
 
 /* ************ Idle scene *************************** */
 
@@ -47,7 +50,7 @@ void output_renderSetScene(KitchenTimer myKitchenTimer,long selected_time, byte 
   if(selected_time!=NO_TIME_SELECTION) renderTimeLong(selected_time);
   else renderTimeLong(myKitchenTimer.getTimeLeft());
   
-  // TODO: Wrap a loop around this to iterate over timers for all other led's 
+  // TODO: place a loop  to iterate over timers for all other led's 
   bitWrite(output_ledPattern,startSegment+1,BLINKSTATE(BLINKCYCLE_FOCUS)); 
   ledModule->setLEDs(output_ledPattern);
 }
@@ -67,7 +70,9 @@ void output_renderDemoScene (byte buttonPattern) {
     else ledModule->setLEDs(buttonPattern);
 }
 
-
+/*  ************************  Sequences *********************************
+ *  *********************************************************************
+ */
 /* ************ clear All *************************** */
 
 void output_clearAllSequence ()
@@ -80,7 +85,27 @@ void output_clearAllSequence ()
   
 }
 
-/* **************** internal helper funtions **************/
+void output_resumeScequence(KitchenTimer myKitchenTimer,byte ui_focussed_timer_index)
+{
+
+  ledModule->clearDisplay();
+  ledModule->setDisplayToString("Go",0,ui_focussed_timer_index*2); delay(1000);    
+  
+  // IMPROVE manage animation of all other timers
+}
+
+void output_holdSequence(KitchenTimer myKitchenTimer,byte ui_focussed_timer_index)
+{
+
+  ledModule->clearDisplay();
+  ledModule->setDisplayToString("PA",0,ui_focussed_timer_index*2); delay(1000);   
+    // IMPROVE manage animation of all other timers 
+}
+
+/*  ************************  Helpers  **********************************
+ *  *********************************************************************
+ */
+
 
 void determineBlinkCycles()
 {
@@ -223,7 +248,7 @@ void setLedBitByTimerStatus(KitchenTimer theKitchenTimer, byte ledIndex) {
       }
    }   
 
-   /*  blinking LED to signal progress when active, is diabled until further user test 
+   /*  blinking the timers Led  to signal progress when active, is diabled until further user test 
    if(myKitchenTimer.isActive()&& !(BLINKSTATE(BLINKCYCLE_RUNNING)) ) {
     bitClear(output_ledPattern,ledIndex);
     return;
@@ -232,9 +257,10 @@ void setLedBitByTimerStatus(KitchenTimer theKitchenTimer, byte ledIndex) {
    bitSet(output_ledPattern,ledIndex);
 }
 
-
-/* *********   output_setup    *******************************+
+/*  ************************  setup  ************************************
+ *  *********************************************************************
  */
+
 void output_setup(TM1638 *ledKeyModToUse) {
   ledModule=ledKeyModToUse;
   ledModule->setupDisplay(DISPLAY_ACTIVE, DISPLAY_INTENSITY);

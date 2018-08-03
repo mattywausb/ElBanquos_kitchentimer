@@ -96,7 +96,7 @@ int input_getSecondsSinceLastEvent() {
   unsigned long timestamp_difference=(millis()-input_last_change_time)/1000;
   if(timestamp_difference>255) return 255;
   #ifdef TRACE_INPUT_HIGH
-    Serial.print(F("last interaction:"));
+    Serial.print(F("input last interaction:"));
     Serial.println(timestamp_difference);
   #endif
   return timestamp_difference;
