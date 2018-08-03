@@ -7,11 +7,11 @@
 #define DISPLAY_INTENSITY 3
 
 #define BLINKCYCLE_FOCUS 1
-#define BLINKCYCLE_1xSEC 2
-#define BLINKCYCLE_2xSEC 3
-#define BLINKCYCLE_1x2SEC 4
-#define BLINKCYCLE_HOLD 5
-#define BLINKCYCLE_15to5 6
+#define BLINKCYCLE_ALERT 2
+#define BLINKCYCLE_OVER 3
+#define BLINKCYCLE_HOLD 4
+#define BLINKCYCLE_RUNNING 5
+
 
 #define BLINKSTATE(blinkcycle) bitRead(output_blinkCycleFlags,blinkcycle)
 
@@ -79,13 +79,12 @@ void output_clearAllSequence ()
 
 void determineBlinkCycles()
 {
-   byte frame=(millis()/125)%16;  /* Create 8fps framenumber, 1 bit in pattern = 1/8 second */
-   bitWrite(output_blinkCycleFlags,BLINKCYCLE_FOCUS,(0x5555>>frame)&0x0001);
-   bitWrite(output_blinkCycleFlags,BLINKCYCLE_2xSEC,(0x3333>>frame)&0x0001);
-   bitWrite(output_blinkCycleFlags,BLINKCYCLE_1xSEC,(0x0f0f>>frame)&0x0001);
-   bitWrite(output_blinkCycleFlags,BLINKCYCLE_1x2SEC,(0x00ff>>frame)&0x0001);
-   bitWrite(output_blinkCycleFlags,BLINKCYCLE_HOLD,(0xffee>>frame)&0x0001);
-   bitWrite(output_blinkCycleFlags,BLINKCYCLE_15to5,(0x0fff>>frame)&0x0001);  
+   byte frame=(millis()/63)%32;  /* Create 16fps framenumber, 1 bit in pattern = 1/8 second */
+   bitWrite(output_blinkCycleFlags,BLINKCYCLE_FOCUS,(0x55555555>>frame)&0x0001);
+   bitWrite(output_blinkCycleFlags,BLINKCYCLE_ALERT,(0x33333333>>frame)&0x0001); 
+   bitWrite(output_blinkCycleFlags,BLINKCYCLE_OVER, (0xfff00000>>frame)&0x0001);
+   bitWrite(output_blinkCycleFlags,BLINKCYCLE_HOLD, (0xfffffcfc>>frame)&0x0001);
+   bitWrite(output_blinkCycleFlags,BLINKCYCLE_RUNNING, (0x00000001>>frame)&0x0001);
 }
 
 
@@ -105,15 +104,22 @@ void renderTimerCompact(KitchenTimer myKitchenTimer, byte startSegment) {
    }
 
    if( myKitchenTimer.isOver()) {
-     if(myKitchenTimer.hasAlert()  && BLINKSTATE(BLINKCYCLE_2xSEC)) {
-        ledModule->setDisplayToString("--",0,startSegment);    
-        return;      
-     }
-     if(!myKitchenTimer.hasAlert()&& ! BLINKSTATE(BLINKCYCLE_1x2SEC) ) 
-     {
-      ledModule->clearDisplayDigit(startSegment,false);
-      ledModule->clearDisplayDigit(startSegment+1,false);
-      return;
+     if(myKitchenTimer.hasAlert())
+     {  if  ( BLINKSTATE(BLINKCYCLE_ALERT))
+        {
+          ledModule->setDisplayToString("*_",0,startSegment);    
+          return;      
+        } else {
+          ledModule->setDisplayToString("_*",0,startSegment); 
+          return;
+        }
+     } else {
+       if(!BLINKSTATE(BLINKCYCLE_OVER) ) 
+       {
+         ledModule->clearDisplayDigit(startSegment,false);
+         ledModule->clearDisplayDigit(startSegment+1,false);
+         return;
+       }
       }
    }
    /* when here, we are allowed to show the time */
@@ -167,11 +173,11 @@ void setLedBitByTimerStatus(KitchenTimer theKitchenTimer, byte ledIndex) {
 
    if( theKitchenTimer.isOver()) 
    {
-     if(theKitchenTimer.hasAlert()  && BLINKSTATE(BLINKCYCLE_2xSEC)) {
+     if(theKitchenTimer.hasAlert()  && BLINKSTATE(BLINKCYCLE_ALERT)) {
          bitClear(output_ledPattern,ledIndex);   
         return;      
      }
-     if(!theKitchenTimer.hasAlert()&& ! (BLINKSTATE(BLINKCYCLE_1x2SEC)) ) 
+     if(!theKitchenTimer.hasAlert()&& ! (BLINKSTATE(BLINKCYCLE_OVER)) ) 
      {
       bitClear(output_ledPattern,ledIndex);
       return;

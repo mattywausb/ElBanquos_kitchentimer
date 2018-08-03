@@ -50,7 +50,7 @@ void process_IDLE_MODE()
 
   if(input_moduleButtonIsPressed(7)) 
   {
-   
+    ui_selected_time=NO_TIME_SELECTION;
     enter_SET_MODE(3);
     return;
   }
@@ -89,16 +89,10 @@ void enter_SET_MODE(byte targetTimer){
     Serial.println(F("#SET_MODE"));
   #endif
   ui_focussed_timer=targetTimer;
-
-  if(myKitchenTimer.isActive()) {
-      if(myKitchenTimer.isOver()) ui_selected_time=0;
-      else {
-        ui_selected_time=NO_TIME_SELECTION;
-      }
-  } else {
+  if(myKitchenTimer.hasAlert()) myKitchenTimer.acknowledgeAlert();
+  if(!myKitchenTimer.isActive()) {
     ui_selected_time=DEFAULT_INTERVAL;
-  }
-    
+  }    
   ui_mode=SET_MODE;
 }
 
@@ -108,35 +102,58 @@ void process_SET_MODE()
      if(ui_selected_time!=NO_TIME_SELECTION) myKitchenTimer.setInterval(ui_selected_time);
      myKitchenTimer.startCounting();
      enter_IDLE_MODE();
+     return;
    }
 
   if(input_moduleButtonIsPressed(__button_of_focussed_timer) )
   {
     
-    if(ui_selected_time!=NO_TIME_SELECTION) { // already had a time selection change 
-       ui_selected_time=NO_TIME_SELECTION; // switch back to follow the time
-    } else {     
-      if(myKitchenTimer.isOver()) myKitchenTimer.disable();
-      else  if(myKitchenTimer.isOnHold()) myKitchenTimer.startCounting();
+    if(ui_selected_time==NO_TIME_SELECTION) { //there was no selection change 
+      if(myKitchenTimer.isOver()) {       
+        myKitchenTimer.disable();
+        enter_IDLE_MODE();
+        return;
+      } else {
+        #ifdef TRACE_CLOCK
+          Serial.println(F(">Hold switch"));
+        #endif
+        if(myKitchenTimer.isOnHold()) 
+            myKitchenTimer.startCounting();
             else myKitchenTimer.stopCounting();
+        enter_IDLE_MODE();
+        return;      
+      }
+      enter_IDLE_MODE();
+      return;
+    } else {  // Time was changed
+      myKitchenTimer.setInterval(ui_selected_time);
+      myKitchenTimer.startCounting();
+      enter_IDLE_MODE();
+      return;
     }
   }
 
-  if(input_moduleButtonIsPressed(5)) 
+  if(input_moduleButtonIsPressed(5)) // Mockup other Button pressed
   {
     enter_IDLE_MODE();
   }
 
   if(input_moduleButtonIsPressed(3)) 
   {
-    if(ui_selected_time==NO_TIME_SELECTION) ui_selected_time=myKitchenTimer.getTimeLeft();
+    if(ui_selected_time==NO_TIME_SELECTION)
+      if(myKitchenTimer.hasAlert()) ui_selected_time=0;
+      else ui_selected_time=myKitchenTimer.getTimeLeft();
+      
     ui_selected_time -= 15;
     if(ui_selected_time<0) ui_selected_time=0;
   }  
   
   if(input_moduleButtonIsPressed(4)) 
   {
-    if(ui_selected_time==NO_TIME_SELECTION) ui_selected_time=myKitchenTimer.getTimeLeft();
+    if(ui_selected_time==NO_TIME_SELECTION)
+      if(myKitchenTimer.hasAlert()) ui_selected_time=0;
+      else ui_selected_time=myKitchenTimer.getTimeLeft();
+      
     ui_selected_time += 15;
     if(ui_selected_time>TIMER_MAX_INTERVAL) ui_selected_time=TIMER_MAX_INTERVAL;
   }  
@@ -179,10 +196,12 @@ void process_DEMO_MODE()
  */
 
 void setup() {
-   #ifdef TRACE_ON 
- Serial.begin(9600);
- Serial.println(F("--------->Kitchen Timer Start<------------"));
- #endif
+
+  #ifdef TRACE_ON 
+    char compile_signature[] = "--- START (Build: " __DATE__ " " __TIME__ ") ---";   
+    Serial.begin(9600);
+    Serial.println(compile_signature); 
+  #endif
 
   output_setup(&ledAndKeymodule);
   input_setup(&ledAndKeymodule); /* Encoder Range 24 hoursis,stepping quater hours */
