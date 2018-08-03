@@ -30,7 +30,7 @@ void KitchenTimer::setInterval(long new_interval)
 {
   original_interval=new_interval;
   tracked_interval=new_interval;
-  if(reference_time!=0) reference_time=millis();
+  if(reference_time!=0) reference_time=(millis()/1000)*1000+1000; // Froce value to 1 second bounds;
   alert_enabled=true;
   #ifdef TRACE_KITCHENTIMER
     Serial.print(F("KT::setInterval:"));Serial.println(new_interval);

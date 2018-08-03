@@ -31,6 +31,11 @@
 
 
 TM1638 *buttonModule;
+byte buttons_current_state=0;
+byte buttons_last_state=0;
+byte buttons_gotPressed_flag=0;
+unsigned long buttons_last_read_time=0;
+#define BUTTON_MODULE_COOLDOWN 10
  
 volatile bool setupComplete=false;
 
@@ -103,9 +108,7 @@ byte input_selectGotPressed() {
  #endif
 
   // --- Mockup until we have the select encoder in place
-  bool result=bitRead(buttonModule->getButtons(),0);
-  if(result) {delay(1200); return true;} // convert to primitive Pressed event every 600 ms
-  return false;
+  return input_moduleButtonGotPressed(6);
   // --- End of Mockup
   
  
@@ -116,10 +119,8 @@ byte input_get_buttonModulePattern() {
   return buttonModule->getButtons();
 }
 
-bool input_moduleButtonIsPressed(byte buttonIndex) {
-  bool result=bitRead(buttonModule->getButtons(),buttonIndex);
-  if(result) delay(600); // convert to primitive Pressed event every 600 ms
-  return result;
+bool input_moduleButtonGotPressed(byte buttonIndex) {
+  return bitRead(buttons_gotPressed_flag,buttonIndex);
 }
 
 bool input_checkEncoderChangeEvent(){
@@ -224,9 +225,11 @@ ISR(TIMER1_COMPA_vect)
 /* ********************************************************************************************************** */
 /* translate the state of buttons into the ticks of the master loop                     */
 
-void input_switches_scan_tick() {  /* After every tick, especially the flank events must be checked, because they will be lost in the next tick */
-    int tick_encoder_movement=encoder_movement;
-          
+void input_switches_scan_tick() {  
+  int tick_encoder_movement=encoder_movement;
+
+   /* transfor high resulution encoder movement into encoder value */
+   
    if(tick_encoder_movement) {
        input_encoder_change_event=true;
        input_encoder_value+=tick_encoder_movement*input_encoder_stepSize;
@@ -235,9 +238,25 @@ void input_switches_scan_tick() {  /* After every tick, especially the flank eve
        else if(input_encoder_value<input_encoder_rangeMin) input_encoder_value=input_encoder_rangeMax;
    }
 
-  /* copy processed debounce state to history bits */
+  /* copy processed tick  state to history bits  and take debounced as new value */
   tick_state=(tick_state&INPUT_CURRENT_BITS)<<1
                  |(debounced_state&INPUT_CURRENT_BITS);
+
+  /* capture buttonsModule states */
+  
+  buttons_last_state=buttons_current_state;
+  if(millis()-buttons_last_read_time>BUTTON_MODULE_COOLDOWN) 
+  {
+    buttons_current_state=buttonModule->getButtons();
+    buttons_last_read_time=millis();
+
+  }
+  buttons_gotPressed_flag=(buttons_last_state^buttons_current_state)&buttons_current_state;
+    
+  if((buttons_last_state^buttons_current_state)) // at least one button changed state
+  {    
+      input_last_change_time=millis();
+  }
 
   #ifdef TRACE_INPUT
   byte test = input_get_buttonModulePattern();

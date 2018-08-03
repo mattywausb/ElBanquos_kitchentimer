@@ -9,6 +9,15 @@
 
 #define DEFAULT_INTERVAL 600
 #define TIMER_MAX_INTERVAL 603800  // Seconds of 7 days
+#define UI_FALLBACK_INTERVAL 10000
+
+#define MOCKUP_SELECT_BUTTON 6
+#define MOCKUP_PLUS_BUTTON 4
+#define MOCKUP_MINUS_BUTTON 2
+#define MOCKUP_DEMO_BUTTON 0
+#define MOCKUP_TIMER_BUTTON 7
+#define MOCKUP_TIMER 3
+
 
 enum UI_MODES {
   IDLE_MODE, // show time, check for alarms, check age of rds time 
@@ -41,31 +50,22 @@ void enter_IDLE_MODE(){
 void process_IDLE_MODE()
 {
 
- if( input_moduleButtonIsPressed(2))
- {
-  enter_DEMO_MODE();
-  return;
- }
-
-
-  if(input_moduleButtonIsPressed(7)) 
+  if( input_moduleButtonGotPressed(MOCKUP_DEMO_BUTTON))
   {
-    ui_selected_time=NO_TIME_SELECTION;
-    enter_SET_MODE(3);
+    enter_DEMO_MODE();
     return;
   }
 
-  if(input_moduleButtonIsPressed(7)) 
+  if(input_moduleButtonGotPressed(MOCKUP_TIMER_BUTTON)) 
   {
-    myKitchenTimer.acknowledgeAlert(); 
-  }  
+    if(myKitchenTimer.hasAlert()){
+      myKitchenTimer.acknowledgeAlert(); 
+    } else {
+      enter_SET_MODE(MOCKUP_TIMER,NO_TIME_SELECTION);
+      return;      
+    }
+  } 
 
- if( input_moduleButtonIsPressed(0)&input_moduleButtonIsPressed(7))
- {
-  enter_DEMO_MODE();
-  return;
- }
-  
   output_renderIdleScene(myKitchenTimer);
 }
 
@@ -84,15 +84,16 @@ void process_PRESELECT_MODE()
 }
 
 /* *************** SET_MODE ***************** */
-void enter_SET_MODE(byte targetTimer){
+void enter_SET_MODE(byte targetTimer,long preselected_time){
   #ifdef TRACE_CLOCK
     Serial.println(F("#SET_MODE"));
   #endif
   ui_focussed_timer=targetTimer;
-  if(myKitchenTimer.hasAlert()) myKitchenTimer.acknowledgeAlert();
-  if(!myKitchenTimer.isActive()) {
-    ui_selected_time=DEFAULT_INTERVAL;
-  }    
+  ui_selected_time=preselected_time;
+  if(preselected_time==NO_TIME_SELECTION
+     && !myKitchenTimer.isActive()) {
+            ui_selected_time=DEFAULT_INTERVAL;
+            }    
   ui_mode=SET_MODE;
 }
 
@@ -105,7 +106,7 @@ void process_SET_MODE()
      return;
    }
 
-  if(input_moduleButtonIsPressed(__button_of_focussed_timer) )
+  if(input_moduleButtonGotPressed(__button_of_focussed_timer) )
   {
     
     if(ui_selected_time==NO_TIME_SELECTION) { //there was no selection change 
@@ -133,12 +134,12 @@ void process_SET_MODE()
     }
   }
 
-  if(input_moduleButtonIsPressed(5)) // Mockup other Button pressed
+  if(input_moduleButtonGotPressed(5)) // Mockup other Button pressed
   {
     enter_IDLE_MODE();
   }
 
-  if(input_moduleButtonIsPressed(3)) 
+  if(input_moduleButtonGotPressed(MOCKUP_MINUS_BUTTON)) 
   {
     if(ui_selected_time==NO_TIME_SELECTION)
       if(myKitchenTimer.hasAlert()) ui_selected_time=0;
@@ -148,7 +149,7 @@ void process_SET_MODE()
     if(ui_selected_time<0) ui_selected_time=0;
   }  
   
-  if(input_moduleButtonIsPressed(4)) 
+  if(input_moduleButtonGotPressed(MOCKUP_PLUS_BUTTON)) 
   {
     if(ui_selected_time==NO_TIME_SELECTION)
       if(myKitchenTimer.hasAlert()) ui_selected_time=0;
@@ -173,7 +174,7 @@ void enter_DEMO_MODE(){
 
 void process_DEMO_MODE()
 {
-  if(input_moduleButtonIsPressed(1)) 
+  if(input_moduleButtonGotPressed(1)) 
   {
     #ifdef DEBUG_SETTING_1
     myKitchenTimer.disable(); // Resets state completely
