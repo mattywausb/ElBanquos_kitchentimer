@@ -22,6 +22,14 @@ const byte switch_pin_list[] = {6,  // ENCODER A
 
                                };
 
+const byte button_for_timer[] = {1,2,5,6}; // Mapping of timers to buttons on the board
+#define MOCKED_ENCODER_SELECT 7
+#define MOCKED_ENCODER_UP 4
+#define MOCKED_ENCODER_DN 3
+#define DEMO_BUTTON 0
+  
+                                
+
 const unsigned int debounce_mask[] = { /* every bit is 2 ms */
   0x0007,    // ENCODER A
   0x0007,    // ENCODER B
@@ -90,10 +98,7 @@ bool input_encoder_wrap = true;
 bool input_encoder_change_event = false;
 
 
-#define MOCKED_ENCODER_SELECT 6
-#define MOCKED_ENCODER_UP 4
-#define MOCKED_ENCODER_DN 2
-#define DEMO_BUTTON 0
+
 
 
 
@@ -130,7 +135,7 @@ bool input_demoButtonGotPressed()
 
 bool input_timerButtonGotPressed(byte buttonIndex)
 {
-  return bitRead(buttons_gotPressed_flag, buttonIndex * 2+1); // Layout _ 1 _ 2 _ 3 _ 4
+  return bitRead(buttons_gotPressed_flag, button_for_timer[buttonIndex]); // Layout _ 1 _ 2 _ 3 _ 4
 }
 
 /* trace function */
