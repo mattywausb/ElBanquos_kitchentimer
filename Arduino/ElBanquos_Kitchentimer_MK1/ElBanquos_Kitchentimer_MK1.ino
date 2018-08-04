@@ -162,7 +162,7 @@ void process_SET_MODE()
        return;       
    }
    
-   if(input_timerButtonGotReleased(ui_focussed_timer_index) ) {
+   if(input_timerButtonGotReleased(ui_focussed_timer_index)&& input_getCurrentPressDuration()<PRESS_DURATION_FOR_RESET ) {
      if(ui_value_changed) {   
        focussed_timer->setInterval(convertControlvalueToTime(input_getEncoderValue()));
        focussed_timer->startCounting();
@@ -232,6 +232,7 @@ void process_SET_MODE()
            {
             ui_focussed_timer_index=other_timer_index;
             focussed_timer=&myKitchenTimerList[ui_focussed_timer_index];
+            input_pauseUntilRelease();
            } else {
             output_blockedSequence(myKitchenTimerList,other_timer_index); 
            }       
