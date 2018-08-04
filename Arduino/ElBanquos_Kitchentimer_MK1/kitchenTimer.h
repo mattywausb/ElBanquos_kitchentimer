@@ -45,16 +45,11 @@ class KitchenTimer
      /* get the interval value from the last start call */
      void getLastStartTime();
 
-     /* check if timer has something to do */
-     bool isActive();
-
-     /* check if timer is over */
+     /* Operation state */
+     bool isRunning();
      bool isOver();
-
-     /* check if timer in Hold mode */
      bool isOnHold();
-
-     /* check if alert is active */
+     bool isDisabled();
      bool hasAlert();
 
  

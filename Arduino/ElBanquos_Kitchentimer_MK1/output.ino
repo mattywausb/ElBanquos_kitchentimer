@@ -125,7 +125,7 @@ void renderTimerCompact(KitchenTimer myKitchenTimer, byte startSegment) {
    bool setDot=BLINKSTATE(BLINKCYCLE_RUNNING); /* dot will blink with running cycle, when shown */
 
    /* manage state specifc blinking */
-   if(!myKitchenTimer.isActive() )  // Inactive channels just show dots
+   if(myKitchenTimer.isDisabled())  // Inactive channels just show dots
    {
       ledModule->clearDisplayDigit(startSegment,true);
       ledModule->clearDisplayDigit(startSegment+1,true);
@@ -227,8 +227,8 @@ void renderTimeLong(long currentTime)
 /* Prepere the bits for the led bar accordingly */
 void setLedBitByTimerStatus(KitchenTimer theKitchenTimer, byte ledIndex) {
 
-   if(!myKitchenTimer.isActive()   
-      ||(!theKitchenTimer.isOver() && theKitchenTimer.isOnHold() &&!BLINKSTATE(BLINKCYCLE_HOLD))
+   if(!myKitchenTimer.isDisabled()   
+      ||(theKitchenTimer.isOnHold() &&!BLINKSTATE(BLINKCYCLE_HOLD))
       )
    {
        bitClear(output_ledPattern,ledIndex);
@@ -248,12 +248,6 @@ void setLedBitByTimerStatus(KitchenTimer theKitchenTimer, byte ledIndex) {
       }
    }   
 
-   /*  blinking the timers Led  to signal progress when active, is diabled until further user test 
-   if(myKitchenTimer.isActive()&& !(BLINKSTATE(BLINKCYCLE_RUNNING)) ) {
-    bitClear(output_ledPattern,ledIndex);
-    return;
-   }
-   */
    bitSet(output_ledPattern,ledIndex);
 }
 

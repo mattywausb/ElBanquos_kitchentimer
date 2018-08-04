@@ -96,27 +96,33 @@ void KitchenTimer::getLastStartTime()
 }
 
 /* check if timer has something to do */
-bool KitchenTimer::isActive()
+bool KitchenTimer::isRunning()
 {
-  return(tracked_interval!=0);
-}
-
-/* check if timer is over */
-bool KitchenTimer::isOver()
-{
-  return getTimeLeft()<=0;
+  return (tracked_interval!=0 && getTimeLeft()>0 && reference_time!=0);
 }
 
 /* check if timer in Hold mode */
 bool KitchenTimer::isOnHold()
 {
-  return tracked_interval!=0 && reference_time==0;
+  return (tracked_interval!=0  && getTimeLeft()>0 && reference_time==0) ;
+}
+
+/* check if timer is over */
+bool KitchenTimer::isOver()
+{
+  return (tracked_interval!=0 && getTimeLeft()<=0);
+}
+
+/* check if timer is over */
+bool KitchenTimer::isDisabled()
+{
+  return (tracked_interval==0);
 }
 
 /* check if alert is active */
 bool KitchenTimer::hasAlert()
 {
-  if(alert_enabled && isActive()) return isOver();
+  if(alert_enabled) return isOver();
   return false;
 }
 
