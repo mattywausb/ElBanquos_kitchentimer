@@ -5,7 +5,7 @@
 // Activate general trace output
 
 #ifdef TRACE_ON
-//#define TRACE_INPUT 1
+#define TRACE_INPUT 1
 //#define TRACE_INPUT_HIGH 1
 #endif
 
@@ -70,8 +70,9 @@ unsigned int tick_state = 0;              /* State provided in the actual tick, 
 #define INPUT_ENCODER_AB_BITS            0x000f
 
 #define INPUT_BUTTON_A_BITS              0x0030
-#define INPUT_BUTTON_A_PRESSED_PATTERN   0x0010
-#define INPUT_BUTTON_A_RELEASED_PATTERN  0x0020
+#define INPUT_BUTTON_A_IS_PRESSED_PATTERN   0x0030
+#define INPUT_BUTTON_A_GOT_PRESSED_PATTERN   0x0010
+#define INPUT_BUTTON_A_GOT_RELEASED_PATTERN  0x0020
 
 /* Variable for reducing cpu usage */
 volatile unsigned long input_last_change_time = 0;
@@ -97,6 +98,9 @@ int input_encoder_stepSize = 1;
 bool input_encoder_wrap = true;
 bool input_encoder_change_event = false;
 
+unsigned long last_press_start_time=0;
+unsigned long last_press_end_time=0;
+
 
 
 
@@ -119,13 +123,47 @@ int input_getSecondsSinceLastEvent() {
 
 /* ------------- Button events --------------- */
 
-byte input_selectGotPressed()
+bool input_selectGotPressed()
 {
   // --- Mockup until we have the select encoder in place
   return bitRead(buttons_gotPressed_flag, MOCKED_ENCODER_SELECT);
   // --- End of Mockup
 
-  return (tick_state & INPUT_BUTTON_A_BITS) == INPUT_BUTTON_A_PRESSED_PATTERN; ; /* We switched from unpressed to pressed */;
+  return (tick_state & INPUT_BUTTON_A_BITS) == INPUT_BUTTON_A_GOT_PRESSED_PATTERN;
+}
+
+
+bool input_selectIsPressed()
+{
+  // --- Mockup until we have the select encoder in place
+  return bitRead(buttons_current_state, MOCKED_ENCODER_SELECT);
+  // --- End of Mockup
+
+  return (tick_state & INPUT_BUTTON_A_BITS) == INPUT_BUTTON_A_IS_PRESSED_PATTERN; 
+}
+
+byte input_selectGotReleased()
+{
+  // --- Mockup until we have the select encoder in place
+  return bitRead(buttons_gotReleased_flag, MOCKED_ENCODER_SELECT);
+  // --- End of Mockup
+
+  return (tick_state & INPUT_BUTTON_A_BITS) == INPUT_BUTTON_A_GOT_RELEASED_PATTERN; 
+}
+
+long input_getCurrentPressDuration()
+{
+  #ifdef TRACE_INPUT
+    Serial.print(F("input CurrentPressDuration:"));
+    Serial.println(millis()-last_press_start_time);
+  #endif
+    
+  return millis()-last_press_start_time;
+}
+
+long input_getLastPressDuration()
+{
+  return last_press_end_time-last_press_start_time;
 }
 
 bool input_demoButtonGotPressed()
@@ -272,12 +310,15 @@ void input_switches_scan_tick() {
   {
     buttons_current_state = buttonModule->getButtons();
     buttons_last_read_time = millis();
-
   }
 
   /* derive state change information */
   buttons_gotPressed_flag = (buttons_last_state ^ buttons_current_state)&buttons_current_state;
+  if(buttons_gotPressed_flag) { 
+    last_press_end_time =last_press_start_time=millis();
+  }
   buttons_gotReleased_flag = (buttons_last_state ^ buttons_current_state) & ~buttons_current_state;
+  if(buttons_gotReleased_flag) last_press_end_time=millis();
 
   if ((buttons_last_state ^ buttons_current_state)) // at least one button changed state
   {

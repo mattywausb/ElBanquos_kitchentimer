@@ -14,6 +14,7 @@
 #define CONTROL_VALUE_DEFAULT_UP  convertTimeToControlvalue(600)   // 10 Minutes as start value when turning upwards 
 #define CONTROL_VALUE_DEFAULT_DN  convertTimeToControlvalue(180)   // 3 Minutes as start value when turning downwards 
 #define UI_FALLBACK_INTERVAL 10   // seconds, ui will fall back to idle wihtout interaction
+#define PRESS_DURATION_FOR_RESET 2500  // milliseconds you must hold select to disable a timer
 
 const long timer_interval_preset[]={180,330,600,1200}; // 3 min, 5.5 min, 10 min, 20 min
 
@@ -156,8 +157,19 @@ void process_SET_MODE()
    } 
 
   /* Select Button */
-  if( input_selectGotPressed())
+
+  if( input_selectIsPressed())
   {
+     if(input_getCurrentPressDuration()>PRESS_DURATION_FOR_RESET) {
+       focussed_timer->disable();
+       output_resetSequence(myKitchenTimerList,ui_focussed_timer_index);
+       enter_IDLE_MODE();
+       return;       
+    }   
+  }
+  if( input_selectGotReleased())
+  {
+
     if(ui_value_changed)  
     { 
       focussed_timer->setInterval(convertControlvalueToTime(input_getEncoderValue()));

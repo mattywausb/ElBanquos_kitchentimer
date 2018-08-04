@@ -8,7 +8,7 @@
 #endif
 
 #define DISPLAY_ACTIVE true
-#define DISPLAY_INTENSITY 3
+#define DISPLAY_INTENSITY 2
 
 #define BLINKCYCLE_FOCUS 1
 #define BLINKCYCLE_ALERT 2
@@ -121,6 +121,16 @@ void  output_blockedSequence(KitchenTimer myKitchenTimerList[],byte ui_focussed_
   }
   // IMPROVE manage animation of all other timers 
 }
+
+
+void output_resetSequence(KitchenTimer myKitchenTimerList[],byte ui_focussed_timer_index)
+{
+
+  ledModule->clearDisplay();
+  ledModule->setDisplayToString("OF",0,ui_focussed_timer_index*2); delay(1000);   
+    // IMPROVE manage animation of all other timers 
+}
+
 /*  ************************  Helpers  **********************************
  *  *********************************************************************
  */
