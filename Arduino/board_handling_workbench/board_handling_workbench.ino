@@ -6,8 +6,12 @@
 
 TM1638 ledAndKeymodule(4, 3, 2);
 
-enum DEMO_MODE { MODE_LED_CHASE, MODE_DIGIT_CHASE};
-DEMO_MODE demo_mode=MODE_LED_CHASE;
+enum DEMO_MODE { 
+    MODE_LED_CHASE
+  , MODE_DIGIT_CHASE
+  , MODE_STRING_EXPERIMENT
+  };
+DEMO_MODE demo_mode=MODE_STRING_EXPERIMENT;
 
 #define MODE_CHANGE_BUTTON 7
 #define DISPLAY_INTENSITY 3
@@ -44,7 +48,7 @@ void loop() {
         
     case MODE_DIGIT_CHASE:
         if(bitRead(buttons,MODE_CHANGE_BUTTON)) {
-            demo_mode=MODE_LED_CHASE;
+            demo_mode=MODE_STRING_EXPERIMENT;
             delay(500);
             break;
         }
@@ -52,6 +56,20 @@ void loop() {
             ledAndKeymodule.clearDisplayDigit(prevCycle,false);
             ledAndKeymodule.setDisplayDigit(0,cycle,false); 
         }
+
+    case MODE_STRING_EXPERIMENT:
+        if(bitRead(buttons,MODE_CHANGE_BUTTON)) {
+            demo_mode=MODE_LED_CHASE;
+            delay(500);
+            break;
+        }  
+
+        ledAndKeymodule.clearDisplay();
+        ledAndKeymodule.setDisplayToString("________",B10000001,0);
+        delay(2000);
+        ledAndKeymodule.setDisplayToString("00",B10000000,3);
+        delay(2000);
+           
    }
    
       

@@ -15,12 +15,9 @@
 #define CONTROL_VALUE_DEFAULT_DN  convertTimeToControlvalue(180)   // 3 Minutes as start value when turning downwards 
 #define UI_FALLBACK_INTERVAL 10   // seconds, ui will fall back to idle wihtout interaction
 
-#define MOCKUP_SELECT_BUTTON 6
-#define MOCKUP_PLUS_BUTTON 4
-#define MOCKUP_MINUS_BUTTON 2
-#define MOCKUP_DEMO_BUTTON 0
-#define MOCKUP_TIMER_BUTTON 7
-#define MOCKUP_TIMER 3
+const long timer_interval_preset[]={180,330,600,1200}; // 3 min, 5.5 min, 10 min, 20 min
+
+#define MOCKUP_TIMER 0
 
 
 enum UI_MODES {
@@ -31,7 +28,7 @@ enum UI_MODES {
 };
 UI_MODES ui_mode = DEMO_MODE; 
 
-byte ui_focussed_timer_index=3;  // until we have multi timer support we test everything with 3
+byte ui_focussed_timer_index=MOCKUP_TIMER;  // until we have multi timer support we test everything with 3
 bool ui_value_changed=false;
 
 TM1638 ledAndKeymodule(4, 3, 2);  // the led+keys module is input and output, so core must own it
@@ -56,13 +53,17 @@ void process_IDLE_MODE()
     return;
   }
 
-  if(input_timerButtonGotPressed(MOCKUP_TIMER) )
+  if(input_timerButtonGotPressed(ui_focussed_timer_index) )
   {
     if(myKitchenTimer.hasAlert()){
       myKitchenTimer.acknowledgeAlert(); 
     } else {
-      ui_value_changed=false;
-      enter_SET_MODE(MOCKUP_TIMER);
+      if(myKitchenTimer.isDisabled()){
+          input_setEncoderRange(0,CONTROL_VALUE_MAX,1,false);   
+          input_setEncoderValue(convertTimeToControlvalue(timer_interval_preset[ui_focussed_timer_index]));     
+          ui_value_changed=true;         
+      } else ui_value_changed=false;
+      enter_SET_MODE(ui_focussed_timer_index);
       return;      
     }
   } 
@@ -125,31 +126,34 @@ void process_SET_MODE()
   {
     if(ui_value_changed)  
     { 
-          myKitchenTimer.setInterval(convertControlvalueToTime(input_getEncoderValue()));
-          myKitchenTimer.startCounting();
-          enter_IDLE_MODE();
-          return;
+      myKitchenTimer.setInterval(convertControlvalueToTime(input_getEncoderValue()));
+      myKitchenTimer.startCounting();
+      enter_IDLE_MODE();
+      return;
     }
     
-    if(!myKitchenTimer.isOver())  // This timer is hot
-    {       
-        #ifdef TRACE_CLOCK
-          Serial.println(F("process_SET_MODE >Hold switch"));
-        #endif
-        if(myKitchenTimer.isOnHold()) 
-        {
-          myKitchenTimer.startCounting();      
-          output_resumeScequence(myKitchenTimer,ui_focussed_timer_index);   
-        } else {
-          myKitchenTimer.stopCounting();
-          output_holdSequence(myKitchenTimer,ui_focussed_timer_index);
-        }
-            
-        enter_IDLE_MODE();
-        return;      
-     } else { // Timer is over */
-        myKitchenTimer.disable();
+    if(myKitchenTimer.isOver())  
+    {
+      myKitchenTimer.disable();
+      enter_IDLE_MODE();
+      return;
      }
+
+    if(myKitchenTimer.isRunning()) 
+    {
+      myKitchenTimer.stopCounting();
+      output_holdSequence(myKitchenTimer,ui_focussed_timer_index);
+      enter_IDLE_MODE();
+      return;   
+    }
+    
+    if(myKitchenTimer.isOnHold()) 
+    {
+      myKitchenTimer.startCounting();      
+      output_resumeScequence(myKitchenTimer,ui_focussed_timer_index);
+      enter_IDLE_MODE();
+      return;   
+    } 
   }
 
    /* Button  of other timer */
