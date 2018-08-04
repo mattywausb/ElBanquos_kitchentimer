@@ -40,10 +40,10 @@ class KitchenTimer
      long getTimeLeft();
 
      /* get the interval value from the last set call */
-     void getLastSetTime();
+     long getLastSetTime();
 
      /* get the interval value from the last start call */
-     void getLastStartTime();
+     long getLastStartTime();
 
      /* Operation state */
      bool isRunning();

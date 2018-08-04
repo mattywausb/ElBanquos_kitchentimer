@@ -5,6 +5,7 @@
 
 #ifdef TRACE_ON
 #define TRACE_OUTPUT_SEQUENCE
+#define TRACE_OUTPUT_HIGH
 #endif
 
 #define DISPLAY_ACTIVE true
@@ -49,7 +50,20 @@ void output_renderIdleScene(KitchenTimer  myKitchenTimerList[]) {
 /* ************ Set scene *************************** */
 
 void output_renderSetScene(KitchenTimer myKitchenTimerList[],long selected_time, byte targetTimer) {
-  byte cycle=(millis()/100)%8; // cycle from 0 to 8, stepping in 1/10s
+  ledModule->setDisplayToString(" ",0,0);
+  SetScene(myKitchenTimerList,selected_time,targetTimer);  
+}
+
+void output_renderSetScene_withLastTime (KitchenTimer myKitchenTimerList[],long selected_time, byte targetTimer) 
+{
+  #ifdef TRACE_OUTPUT_HIGH
+   // Serial.println(F("renderSetScene_withLastTime"));
+  #endif
+  ledModule->setDisplayToString("A",0,0);
+  SetScene(myKitchenTimerList,selected_time,targetTimer);   
+}
+
+void SetScene(KitchenTimer myKitchenTimerList[],long selected_time, byte targetTimer) {
   byte startSegment=targetTimer*2;
   
   determineBlinkCycles(); 
@@ -62,6 +76,9 @@ void output_renderSetScene(KitchenTimer myKitchenTimerList[],long selected_time,
   bitWrite(output_ledPattern,startSegment+1,BLINKSTATE(BLINKCYCLE_FOCUS)); 
   ledModule->setLEDs(output_ledPattern);
 }
+
+
+
 
 /* ************ Demo scene *************************** */
 
@@ -83,6 +100,16 @@ void output_renderDemoScene (byte buttonPattern) {
  */
 /* ************ clear All *************************** */
 
+void output_startupSequence()
+{
+  output_clearAllSequence ();
+  for(int i=0;i<4;i++) {
+    ledModule->setLEDs((B00010000<<i) | (B00001000>>i));
+    delay(150);
+  }
+  ledModule->setLEDs(0);
+}
+
 void output_clearAllSequence ()
 {
   ledModule->clearDisplay();
@@ -90,7 +117,6 @@ void output_clearAllSequence ()
   #ifdef TRACE_OUTPUT_SEQUENCE
     Serial.println(F("!ouput_clearAllSequence"));  
   #endif
-  
 }
 
 void output_resumeSequence(KitchenTimer myKitchenTimerList[],byte ui_focussed_timer_index)
@@ -239,13 +265,13 @@ void renderTimeLong(long currentTime)
    char s[9];
    currentTime=abs(currentTime);
    if(currentTime<86400)  {// below 24 Hour display mode hh"H"mm.ss
-      sprintf(s, " %2ldh%02ld%02ld", (currentTime/3600)%24,(currentTime/60)%60,currentTime%60);
-      ledModule->setDisplayToString(s,B00000100,0);    
+      sprintf(s, "%2ldh%02ld%02ld", (currentTime/3600)%24,(currentTime/60)%60,currentTime%60);
+      ledModule->setDisplayToString(s,B00001000,1);    
         return;  
    }
 
-   sprintf(s, "%ldd%2dh%02d'", (currentTime/86400)%24,(currentTime/3600)%24,(currentTime/60)%60);
-   ledModule->setDisplayToString(s,B00000010,0);    
+   sprintf(s, "%ldd%2dh%02d", (currentTime/86400)%24,(currentTime/3600)%24,(currentTime/60)%60);
+   ledModule->setDisplayToString(s,B00000010,1);    
    return;  
 
 }
@@ -285,4 +311,5 @@ void setLedBitByTimerStatus(KitchenTimer theKitchenTimer, byte ledIndex) {
 void output_setup(TM1638 *ledKeyModToUse) {
   ledModule=ledKeyModToUse;
   ledModule->setupDisplay(DISPLAY_ACTIVE, DISPLAY_INTENSITY);
+  output_startupSequence();
 }

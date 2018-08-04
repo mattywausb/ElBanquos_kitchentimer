@@ -100,6 +100,7 @@ bool input_encoder_change_event = false;
 
 unsigned long last_press_start_time=0;
 unsigned long last_press_end_time=0;
+bool input_enabled=true;
 
 
 
@@ -126,29 +127,29 @@ int input_getSecondsSinceLastEvent() {
 bool input_selectGotPressed()
 {
   // --- Mockup until we have the select encoder in place
-  return bitRead(buttons_gotPressed_flag, MOCKED_ENCODER_SELECT);
+  return input_enabled && bitRead(buttons_gotPressed_flag, MOCKED_ENCODER_SELECT);
   // --- End of Mockup
 
-  return (tick_state & INPUT_BUTTON_A_BITS) == INPUT_BUTTON_A_GOT_PRESSED_PATTERN;
+  return input_enabled && ((tick_state & INPUT_BUTTON_A_BITS) == INPUT_BUTTON_A_GOT_PRESSED_PATTERN);
 }
 
 
 bool input_selectIsPressed()
 {
   // --- Mockup until we have the select encoder in place
-  return bitRead(buttons_current_state, MOCKED_ENCODER_SELECT);
+  return input_enabled && bitRead(buttons_current_state, MOCKED_ENCODER_SELECT);
   // --- End of Mockup
 
-  return (tick_state & INPUT_BUTTON_A_BITS) == INPUT_BUTTON_A_IS_PRESSED_PATTERN; 
+  return input_enabled && ((tick_state & INPUT_BUTTON_A_BITS) == INPUT_BUTTON_A_IS_PRESSED_PATTERN); 
 }
 
 byte input_selectGotReleased()
 {
   // --- Mockup until we have the select encoder in place
-  return bitRead(buttons_gotReleased_flag, MOCKED_ENCODER_SELECT);
+  return input_enabled && bitRead(buttons_gotReleased_flag, MOCKED_ENCODER_SELECT);
   // --- End of Mockup
 
-  return (tick_state & INPUT_BUTTON_A_BITS) == INPUT_BUTTON_A_GOT_RELEASED_PATTERN; 
+  return input_enabled && ((tick_state & INPUT_BUTTON_A_BITS) == INPUT_BUTTON_A_GOT_RELEASED_PATTERN); 
 }
 
 long input_getCurrentPressDuration()
@@ -163,18 +164,29 @@ long input_getCurrentPressDuration()
 
 long input_getLastPressDuration()
 {
-  return last_press_end_time-last_press_start_time;
+  return input_enabled && last_press_end_time-last_press_start_time;
 }
 
 bool input_demoButtonGotPressed()
 {
-  return bitRead(buttons_gotPressed_flag, DEMO_BUTTON);
+  return input_enabled && bitRead(buttons_gotPressed_flag, DEMO_BUTTON);
 }
 
 bool input_timerButtonGotPressed(byte buttonIndex)
 {
-  return bitRead(buttons_gotPressed_flag, button_for_timer[buttonIndex]); // Layout _ 1 _ 2 _ 3 _ 4
+  return input_enabled && bitRead(buttons_gotPressed_flag, button_for_timer[buttonIndex]); 
 }
+
+bool input_timerButtonIsPressed(byte buttonIndex)
+{
+  return input_enabled && bitRead(buttons_current_state, button_for_timer[buttonIndex]);
+}
+
+bool input_timerButtonGotReleased(byte buttonIndex)
+{
+  return input_enabled && bitRead(buttons_gotReleased_flag, button_for_timer[buttonIndex]); 
+}
+
 
 /* trace function */
 byte input_get_buttonModulePattern()
@@ -214,6 +226,13 @@ void input_setEncoderRange(int rangeMin, int rangeMax, int stepSize, bool wrap) 
     Serial.print(stepSize); Serial.print(F(" Wrap "));
     Serial.println(wrap, BIN);
   #endif
+}
+
+/* Diable input until all buttons have been released */
+
+void input_pauseUntilRelease()
+{
+  input_enabled=false;
 }
 
 
@@ -346,13 +365,15 @@ void input_switches_scan_tick() {
   int tick_encoder_movement = encoder_movement;  // Freeze the value for upcoming operations
   if (tick_encoder_movement) {
     input_encoder_change_event = true;
-    input_encoder_value += tick_encoder_movement * input_encoder_stepSize;
+    if(input_enabled) input_encoder_value += tick_encoder_movement * input_encoder_stepSize;
     encoder_movement -= tick_encoder_movement; // remove the transfered value from the tracking
   }
 
   /* Wrap or limit the encoder value */
   if (input_encoder_value > input_encoder_rangeMax)      input_encoder_value = input_encoder_wrap ? input_encoder_rangeMin : input_encoder_rangeMax;
   else if (input_encoder_value < input_encoder_rangeMin) input_encoder_value = input_encoder_wrap ? input_encoder_rangeMax : input_encoder_rangeMin;
+
+  if(buttons_current_state==0&& buttons_last_state==0)  input_enabled=true; // enable input when all is released and settled
 
 } // void input_switches_tick()
 

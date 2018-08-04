@@ -15,6 +15,7 @@
 #define CONTROL_VALUE_DEFAULT_DN  convertTimeToControlvalue(180)   // 3 Minutes as start value when turning downwards 
 #define UI_FALLBACK_INTERVAL 10   // seconds, ui will fall back to idle wihtout interaction
 #define PRESS_DURATION_FOR_RESET 2500  // milliseconds you must hold select to disable a timer
+#define PRESS_DURATION_SHORT 300  // milliseconds while a press counts as short 
 
 const long timer_interval_preset[]={180,330,600,1200}; // 3 min, 5.5 min, 10 min, 20 min
 
@@ -45,6 +46,7 @@ void enter_IDLE_MODE(){
   #endif
   ui_mode=IDLE_MODE;
   output_clearAllSequence ();
+  input_pauseUntilRelease();
 }
 
 void process_IDLE_MODE()
@@ -60,7 +62,7 @@ void process_IDLE_MODE()
   for(ui_focussed_timer_index=0;ui_focussed_timer_index<TIMER_COUNT;ui_focussed_timer_index++)
   {  
     focussed_timer=&myKitchenTimerList[ui_focussed_timer_index];
-    if(input_timerButtonGotPressed(ui_focussed_timer_index) )
+    if(input_timerButtonGotReleased(ui_focussed_timer_index) )
     {
       if(focussed_timer->hasAlert()){
         focussed_timer->acknowledgeAlert(); 
@@ -134,10 +136,13 @@ void enter_SET_MODE()
   }
   ui_mode=SET_MODE;
   output_clearAllSequence ();
+  input_pauseUntilRelease();
 }
 
 void process_SET_MODE()
 {
+   static bool select_short_press=false;
+   
    KitchenTimer *focussed_timer=&myKitchenTimerList[ui_focussed_timer_index];
    /* UI Fallback, after brief time of no interaction */
    if(input_getSecondsSinceLastEvent()>UI_FALLBACK_INTERVAL) 
@@ -147,7 +152,17 @@ void process_SET_MODE()
    }
 
    /* Button of the timer */
-   if(input_timerButtonGotPressed(ui_focussed_timer_index)) {
+
+   if( input_timerButtonIsPressed(ui_focussed_timer_index)
+   && input_getCurrentPressDuration()>PRESS_DURATION_FOR_RESET)
+   {
+       focussed_timer->disable();
+       output_resetSequence(myKitchenTimerList,ui_focussed_timer_index);
+       enter_IDLE_MODE();
+       return;       
+   }
+   
+   if(input_timerButtonGotReleased(ui_focussed_timer_index) ) {
      if(ui_value_changed) {   
        focussed_timer->setInterval(convertControlvalueToTime(input_getEncoderValue()));
        focussed_timer->startCounting();
@@ -157,49 +172,48 @@ void process_SET_MODE()
    } 
 
   /* Select Button */
+   if( input_selectIsPressed() && input_getCurrentPressDuration()>PRESS_DURATION_SHORT)
+   {
+    output_renderSetScene_withLastTime(myKitchenTimerList,focussed_timer->getLastSetTime(),ui_focussed_timer_index); 
+    return;
+   }
 
-  if( input_selectIsPressed())
+  if( input_selectGotReleased() && input_getCurrentPressDuration()<PRESS_DURATION_SHORT)
   {
-     if(input_getCurrentPressDuration()>PRESS_DURATION_FOR_RESET) {
-       focussed_timer->disable();
-       output_resetSequence(myKitchenTimerList,ui_focussed_timer_index);
-       enter_IDLE_MODE();
-       return;       
-    }   
-  }
-  if( input_selectGotReleased())
-  {
-
-    if(ui_value_changed)  
-    { 
-      focussed_timer->setInterval(convertControlvalueToTime(input_getEncoderValue()));
-      focussed_timer->startCounting();
-      enter_IDLE_MODE();
-      return;
-    }
+    if(input_getLastPressDuration()<PRESS_DURATION_SHORT) 
+    {
     
-    if(focussed_timer->isOver())  
-    {
-      focussed_timer->disable();
-      enter_IDLE_MODE();
-      return;
-     }
-
-    if(focussed_timer->isRunning()) 
-    {
-      focussed_timer->stopCounting();
-      output_holdSequence(myKitchenTimerList,ui_focussed_timer_index);
-      enter_IDLE_MODE();
-      return;   
+      if(ui_value_changed)  
+      { 
+        focussed_timer->setInterval(convertControlvalueToTime(input_getEncoderValue()));
+        focussed_timer->startCounting();
+        enter_IDLE_MODE();
+        return;
+      }
+      
+      if(focussed_timer->isOver())  
+      {
+        focussed_timer->disable();
+        enter_IDLE_MODE();
+        return;
+       }
+  
+      if(focussed_timer->isRunning()) 
+      {
+        focussed_timer->stopCounting();
+        output_holdSequence(myKitchenTimerList,ui_focussed_timer_index);
+        enter_IDLE_MODE();
+        return;   
+      }
+      
+      if(focussed_timer->isOnHold()) 
+      {
+        focussed_timer->startCounting();      
+        output_resumeSequence(myKitchenTimerList,ui_focussed_timer_index);
+        enter_IDLE_MODE();
+        return;   
+      } 
     }
-    
-    if(focussed_timer->isOnHold()) 
-    {
-      focussed_timer->startCounting();      
-      output_resumeSequence(myKitchenTimerList,ui_focussed_timer_index);
-      enter_IDLE_MODE();
-      return;   
-    } 
   }
 
    /* Button  of other timer */

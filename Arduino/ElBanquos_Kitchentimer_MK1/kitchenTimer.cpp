@@ -84,13 +84,13 @@ long KitchenTimer::getTimeLeft()
 
 
 /* get the interval value from the last set call */
-void KitchenTimer::getLastSetTime()
+long KitchenTimer::getLastSetTime()
 {
   return original_interval;
 }
 
 /* get the interval value from the last start call */
-void KitchenTimer::getLastStartTime()
+long KitchenTimer::getLastStartTime()
 {
   return tracked_interval;
 }
