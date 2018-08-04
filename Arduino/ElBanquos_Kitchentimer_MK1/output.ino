@@ -227,7 +227,7 @@ void renderTimeLong(long currentTime)
 /* Prepere the bits for the led bar accordingly */
 void setLedBitByTimerStatus(KitchenTimer theKitchenTimer, byte ledIndex) {
 
-   if(!myKitchenTimer.isDisabled()   
+   if(theKitchenTimer.isDisabled()   
       ||(theKitchenTimer.isOnHold() &&!BLINKSTATE(BLINKCYCLE_HOLD))
       )
    {
@@ -237,11 +237,11 @@ void setLedBitByTimerStatus(KitchenTimer theKitchenTimer, byte ledIndex) {
 
    if( theKitchenTimer.isOver()) 
    {
-     if(theKitchenTimer.hasAlert()  && BLINKSTATE(BLINKCYCLE_ALERT)) {
+     if(theKitchenTimer.hasAlert() && BLINKSTATE(BLINKCYCLE_ALERT)) {
          bitClear(output_ledPattern,ledIndex);   
         return;      
      }
-     if(!theKitchenTimer.hasAlert()&& ! (BLINKSTATE(BLINKCYCLE_OVER)) ) 
+     if(!theKitchenTimer.hasAlert() && (BLINKSTATE(BLINKCYCLE_OVER)) ) 
      {
       bitClear(output_ledPattern,ledIndex);
       return;
