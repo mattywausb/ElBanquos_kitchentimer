@@ -7,6 +7,7 @@
 #ifdef TRACE_ON
 #define TRACE_INPUT 1
 //#define TRACE_INPUT_HIGH 1
+#define TRACE_INPUT_traceValue_acceleration
 #endif
 
 
@@ -16,9 +17,9 @@
 
 #define PORT_MAIN_SWITCH 8
 
-const byte switch_pin_list[] = {6,  // ENCODER A
-                                7,    // ENCODER B
-                                8    // BUTTON A SELECT ( ENCODER PUSH)
+const byte switch_pin_list[] = {11,  // ENCODER A
+                                12,    // ENCODER B
+                                10    // BUTTON A SELECT ( ENCODER PUSH)
 
                                };
 
@@ -51,8 +52,15 @@ volatile bool setupComplete = false;
 volatile unsigned int raw_state_register[INPUT_PORT_COUNT];
 volatile unsigned int raw_state;
 volatile unsigned int debounced_state = 0; /* Debounced state with history to last cycle managed by the ISR */
+volatile unsigned long input_last_change_time = 0;
+
+
 unsigned int tick_state = 0;              /* State provided in the actual tick, with change indication to last tick */
 
+#ifdef TRACE_INPUT_traceValue_acceleration
+volatile byte traceValue_acceleration=0;
+volatile int traceValue_turn_interval=0;
+#endif
 
 #define INPUT_BITIDX_ENCODER_A 0
 #define INPUT_BITIDX_ENCODER_B 2
@@ -74,8 +82,7 @@ unsigned int tick_state = 0;              /* State provided in the actual tick, 
 #define INPUT_BUTTON_A_GOT_PRESSED_PATTERN   0x0010
 #define INPUT_BUTTON_A_GOT_RELEASED_PATTERN  0x0020
 
-/* Variable for reducing cpu usage */
-volatile unsigned long input_last_change_time = 0;
+
 
 /* Variables for debounce handling */
 
@@ -87,6 +94,10 @@ volatile unsigned long input_last_change_time = 0;
 #define ENCODER_IDLE_STATE 0
 #define ENCODER_A_FIRST_STATE INPUT_ENCODER_A_CLOSED_PATTERN
 #define ENCODER_B_FIRST_STATE INPUT_ENCODER_B_CLOSED_PATTERN
+
+#define ENCODER_2x_TURN_INTERVAL 150
+#define ENCODER_4x_TURN_INTERVAL 70
+
 
 volatile byte encoder_transition_state = 0;
 volatile int encoder_movement = 0;
@@ -126,29 +137,17 @@ int input_getSecondsSinceLastEvent() {
 
 bool input_selectGotPressed()
 {
-  // --- Mockup until we have the select encoder in place
-  return input_enabled && bitRead(buttons_gotPressed_flag, MOCKED_ENCODER_SELECT);
-  // --- End of Mockup
 
   return input_enabled && ((tick_state & INPUT_BUTTON_A_BITS) == INPUT_BUTTON_A_GOT_PRESSED_PATTERN);
 }
 
-
 bool input_selectIsPressed()
 {
-  // --- Mockup until we have the select encoder in place
-  return input_enabled && bitRead(buttons_current_state, MOCKED_ENCODER_SELECT);
-  // --- End of Mockup
-
   return input_enabled && ((tick_state & INPUT_BUTTON_A_BITS) == INPUT_BUTTON_A_IS_PRESSED_PATTERN); 
 }
 
 byte input_selectGotReleased()
 {
-  // --- Mockup until we have the select encoder in place
-  return input_enabled && bitRead(buttons_gotReleased_flag, MOCKED_ENCODER_SELECT);
-  // --- End of Mockup
-
   return input_enabled && ((tick_state & INPUT_BUTTON_A_BITS) == INPUT_BUTTON_A_GOT_RELEASED_PATTERN); 
 }
 
@@ -248,6 +247,8 @@ void input_pauseUntilRelease()
 
 ISR(TIMER1_COMPA_vect)
 {
+  static unsigned long last_turn_event=0;
+  unsigned long turn_event_interval=0;
   TCNT1 = 0;             // reset the counter register
 
   if (!setupComplete) return; 
@@ -281,17 +282,50 @@ ISR(TIMER1_COMPA_vect)
       break;
 
     case ENCODER_A_FIRST_STATE:
-      if (bitRead(debounced_state, INPUT_BITIDX_ENCODER_A) == 0 // A is back open
+      if (bitRead(debounced_state, INPUT_BITIDX_ENCODER_A) == 0 // A is open
           && ((debounced_state & INPUT_ENCODER_B_BITS) == INPUT_ENCODER_B_OPENED_PATTERN)) { // B Pin just got opened
-        encoder_movement++;
+        encoder_movement++; 
+        turn_event_interval=millis()-last_turn_event;
+        last_turn_event=millis();    
+        if(turn_event_interval<ENCODER_2x_TURN_INTERVAL)
+        {
+          encoder_movement+=1;
+          #ifdef TRACE_INPUT_traceValue_acceleration 
+            traceValue_turn_interval=turn_event_interval;
+            traceValue_acceleration=2;
+          #endif
+          if(turn_event_interval<ENCODER_4x_TURN_INTERVAL)
+          {
+            encoder_movement+=2;                 
+            #ifdef TRACE_INPUT_traceValue_acceleration 
+              traceValue_acceleration=4;
+            #endif
+          }
+        }
       }
       break;
 
     case ENCODER_B_FIRST_STATE:
-      if (bitRead(debounced_state, INPUT_BITIDX_ENCODER_B) == 0 // B is back open
+      if (bitRead(debounced_state, INPUT_BITIDX_ENCODER_B) == 0 // B is open
           && ((debounced_state & INPUT_ENCODER_A_BITS) == INPUT_ENCODER_A_OPENED_PATTERN)) { // A Pin just got opened
         encoder_movement--;
-
+        turn_event_interval=millis()-last_turn_event;  
+        last_turn_event=millis();  
+        if(turn_event_interval<ENCODER_2x_TURN_INTERVAL)
+        {
+          encoder_movement-=1;
+          #ifdef TRACE_INPUT_traceValue_acceleration 
+            traceValue_turn_interval=turn_event_interval;
+            traceValue_acceleration=2;
+          #endif
+          if(turn_event_interval<ENCODER_4x_TURN_INTERVAL)
+          {
+            encoder_movement-=2;                 
+            #ifdef TRACE_INPUT_traceValue_acceleration 
+              traceValue_acceleration=4;
+            #endif
+          }
+        }
       }
       break;
   };
@@ -318,6 +352,14 @@ ISR(TIMER1_COMPA_vect)
 
 void input_switches_scan_tick() {
 
+  #ifdef TRACE_INPUT_traceValue_acceleration 
+   if( traceValue_acceleration) 
+   {
+    Serial.print(traceValue_turn_interval);Serial.print(F("("));
+    Serial.print(traceValue_acceleration);Serial.print(F(") "));
+    traceValue_acceleration=0;    
+   }
+  #endif
 
   /* copy processed tick  state to history bits  and take debounced as new value */
   tick_state = (tick_state & INPUT_CURRENT_BITS) << 1
@@ -331,13 +373,11 @@ void input_switches_scan_tick() {
     buttons_last_read_time = millis();
   }
 
-  /* derive state change information */
+  /* derive state change information for the button module  */
   buttons_gotPressed_flag = (buttons_last_state ^ buttons_current_state)&buttons_current_state;
-  if(buttons_gotPressed_flag) { 
-    last_press_end_time =last_press_start_time=millis();
-  }
   buttons_gotReleased_flag = (buttons_last_state ^ buttons_current_state) & ~buttons_current_state;
-  if(buttons_gotReleased_flag) last_press_end_time=millis();
+  
+
 
   if ((buttons_last_state ^ buttons_current_state)) // at least one button changed state
   {
@@ -348,6 +388,10 @@ void input_switches_scan_tick() {
       Serial.println(buttons_gotReleased_flag, BIN);
     #endif
   }
+
+  /* Track pressing time */
+  if(buttons_gotPressed_flag || input_selectGotPressed()) last_press_end_time =last_press_start_time=millis();
+  if(buttons_gotReleased_flag || input_selectGotReleased()) last_press_end_time=millis();
 
   /* simulate encoder movement with buttons */
   if (bitRead(buttons_gotPressed_flag, MOCKED_ENCODER_UP))
