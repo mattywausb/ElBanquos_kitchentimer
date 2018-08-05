@@ -23,11 +23,9 @@ const byte switch_pin_list[] = {11,  // ENCODER A
 
                                };
 
-const byte button_for_timer[] = {1,2,5,6}; // Mapping of timers to buttons on the board
-#define MOCKED_ENCODER_SELECT 7
-#define MOCKED_ENCODER_UP 4
-#define MOCKED_ENCODER_DN 3
-#define DEMO_BUTTON 0
+const byte button_for_timer[] = {1,3,5,7}; // Mapping of timers to buttons on the board
+
+
   
                                 
 
@@ -166,10 +164,6 @@ long input_getLastPressDuration()
   return input_enabled && last_press_end_time-last_press_start_time;
 }
 
-bool input_demoButtonGotPressed()
-{
-  return input_enabled && bitRead(buttons_gotPressed_flag, DEMO_BUTTON);
-}
 
 bool input_timerButtonGotPressed(byte buttonIndex)
 {
@@ -393,17 +387,6 @@ void input_switches_scan_tick() {
   if(buttons_gotPressed_flag || input_selectGotPressed()) last_press_end_time =last_press_start_time=millis();
   if(buttons_gotReleased_flag || input_selectGotReleased()) last_press_end_time=millis();
 
-  /* simulate encoder movement with buttons */
-  if (bitRead(buttons_gotPressed_flag, MOCKED_ENCODER_UP))
-  {
-    input_encoder_value += input_encoder_stepSize;
-    input_encoder_change_event = true;
-  }
-  if (bitRead(buttons_gotPressed_flag, MOCKED_ENCODER_DN))
-  {
-    input_encoder_value -= input_encoder_stepSize;
-    input_encoder_change_event = true;
-  }
 
   /* transfor high resulution encoder movement into encoder value */
   int tick_encoder_movement = encoder_movement;  // Freeze the value for upcoming operations

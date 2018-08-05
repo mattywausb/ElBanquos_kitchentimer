@@ -25,8 +25,7 @@ const long timer_interval_preset[]={180,330,600,1200}; // 3 min, 5.5 min, 10 min
 enum UI_MODES {
   IDLE_MODE, // show time, check for alarms, check age of rds time 
   PRESELECT_MODE,
-  SET_MODE,
-  DEMO_MODE
+  SET_MODE
 };
 UI_MODES ui_mode = IDLE_MODE; 
 
@@ -53,11 +52,6 @@ void process_IDLE_MODE()
 {
   KitchenTimer *focussed_timer;
 
-  if( input_demoButtonGotPressed())
-  {
-    enter_DEMO_MODE();
-    return;
-  }
 
   for(ui_focussed_timer_index=0;ui_focussed_timer_index<TIMER_COUNT;ui_focussed_timer_index++)
   {  
@@ -271,26 +265,8 @@ void process_SET_MODE()
   else output_renderSetScene(myKitchenTimerList,focussed_timer->getTimeLeft(),ui_focussed_timer_index);
 }
 
-/* *************** DEMO_MODE ***************** */
-void enter_DEMO_MODE()
-{
-  #ifdef TRACE_CLOCK
-    Serial.println(F("#DEMO"));
-  #endif
-  ui_mode=DEMO_MODE;
-  output_clearAllSequence ();
-}
 
-void process_DEMO_MODE()
-{
-  if(input_demoButtonGotPressed()) 
-  {
-    enter_IDLE_MODE();
-    return;
-  }
-  
-  output_renderDemoScene (input_get_buttonModulePattern()) ;
-}
+
 /* ******************   Helpers    *************************     
  * *********************************************************
  */
@@ -355,7 +331,8 @@ void setup() {
     Serial.begin(9600);
     Serial.println(compile_signature); 
   #endif
-
+  
+  sound_setup();
   output_setup(&ledAndKeymodule);
   input_setup(&ledAndKeymodule); 
 
@@ -391,15 +368,21 @@ void loop() {
    /* Inputs */
   input_switches_scan_tick();
 
-
-
-
     /* UI logic */
     switch (ui_mode) {
           case IDLE_MODE:                 process_IDLE_MODE(); break;
           case PRESELECT_MODE:            process_PRESELECT_MODE(); break;
           case SET_MODE:                  process_SET_MODE(); break;
-          case DEMO_MODE:                 process_DEMO_MODE(); break;
+
     }
-  
+
+  /* Manage sound */
+  for(int i=0;i<TIMER_COUNT;i++) {
+    if(myKitchenTimerList[i].hasAlert()) {
+      sound_playAlarmForTimer(i);
+    } else {
+      sound_stopAlarmForTimer(i);
+    }    
+  }
+  sound_tick();
 }
