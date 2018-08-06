@@ -17,6 +17,8 @@
 #define BLINKCYCLE_HOLD 4
 #define BLINKCYCLE_RUNNING 5
 
+#define TIMER_CALM_DOWN_TIME -120
+
 
 #define BLINKSTATE(blinkcycle) bitRead(output_blinkCycleFlags,blinkcycle)
 
@@ -72,8 +74,11 @@ void output_renderSetScene_withLastTime (KitchenTimer myKitchenTimerList[],long 
   #ifdef TRACE_OUTPUT_HIGH
    // Serial.println(F("renderSetScene_withLastTime"));
   #endif
-  ledModule->setDisplayToString("A",0,0);
-  SetScene(myKitchenTimerList,selected_time,targetTimer);   
+  if(selected_time!=0) 
+  {
+    ledModule->setDisplayToString("A",0,0);
+    SetScene(myKitchenTimerList,selected_time,targetTimer);   
+  } else ledModule->setDisplayToString("A -h----",B00000100,0);
 }
 
 void SetScene(KitchenTimer myKitchenTimerList[],long selected_time, byte targetTimer) {
@@ -203,8 +208,11 @@ void renderTimerCompact(KitchenTimer myKitchenTimer, byte startSegment) {
           return;
         }
      } else {
+      if ( myKitchenTimer.getTimeLeft()<TIMER_CALM_DOWN_TIME || BLINKSTATE(BLINKCYCLE_OVER) ) 
+      {
         ledModule->setDisplayToString("__",B10000000,startSegment);   
-        return;
+        return;        
+      }
      }
    }
    /* when here, we are allowed to show the time */
