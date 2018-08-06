@@ -102,6 +102,13 @@ void process_PRESELECT_MODE()
 {
   KitchenTimer *focussed_timer;
 
+   /* UI Fallback, after brief time of no interaction */
+   if(input_getSecondsSinceLastEvent()>UI_FALLBACK_INTERVAL) 
+   {
+     enter_IDLE_MODE();
+     return;    
+   }
+
   /* Timer Button */
   for(ui_focussed_timer_index=0;ui_focussed_timer_index<TIMER_COUNT;ui_focussed_timer_index++)
   {  
@@ -181,6 +188,7 @@ void process_SET_MODE()
    static bool select_short_press=false;
    
    KitchenTimer *focussed_timer=&myKitchenTimerList[ui_focussed_timer_index];
+   
    /* UI Fallback, after brief time of no interaction */
    if(input_getSecondsSinceLastEvent()>UI_FALLBACK_INTERVAL) 
    {

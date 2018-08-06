@@ -51,6 +51,7 @@ void output_renderIdleScene(KitchenTimer  myKitchenTimerList[]) {
 void output_renderPreselectScene(KitchenTimer myKitchenTimerList[],long selected_time)
 {
   determineBlinkCycles(); 
+  ledModule->setDisplayToString(" ",0,0);
   renderTimeLong(selected_time);
   for(int i=0;i<TIMER_COUNT;i++)
   {
@@ -217,21 +218,21 @@ void renderTimeCompact(long currentTime,bool dotState, byte startSegment)
    if(currentTime>=86400)  // day display mode
    { 
       sprintf(s, "%dd", currentTime/86400);
-      ledModule->setDisplayToString(s,0,startSegment);    
+      ledModule->setDisplayToString(s,dotState?B01000000:0,startSegment);    
       return;  
    }
    
    if(currentTime>=36000)  // 10 Hour display mode
    { 
       sprintf(s, "H%d", currentTime/36000);
-      ledModule->setDisplayToString(s,0,startSegment);    
+      ledModule->setDisplayToString(s,dotState?B01000000:0,startSegment);    
       return;  
    }
    
    if(currentTime>=3600)  // Hour display mode
    { 
       sprintf(s, "%dh", currentTime/3600);
-      ledModule->setDisplayToString(s,0,startSegment);    
+      ledModule->setDisplayToString(s,dotState?B01000000:0,startSegment);    
       return;  
    }
    
