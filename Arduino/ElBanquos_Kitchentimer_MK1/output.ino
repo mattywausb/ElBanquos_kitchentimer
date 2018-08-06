@@ -47,6 +47,18 @@ void output_renderIdleScene(KitchenTimer  myKitchenTimerList[]) {
   ledModule->setLEDs(output_ledPattern);
 }
 
+/* ************ Preselect scene *************************** */
+void output_renderPreselectScene(KitchenTimer myKitchenTimerList[],long selected_time)
+{
+  determineBlinkCycles(); 
+  renderTimeLong(selected_time);
+  for(int i=0;i<TIMER_COUNT;i++)
+  {
+    setLedBitByTimerStatus(myKitchenTimerList[i],i*2+1);  
+  } 
+  ledModule->setLEDs(output_ledPattern);
+}
+
 /* ************ Set scene *************************** */
 
 void output_renderSetScene(KitchenTimer myKitchenTimerList[],long selected_time, byte targetTimer) {
@@ -253,7 +265,7 @@ void renderTimeLong(long currentTime)
         return;  
    }
 
-   sprintf(s, "%ldd%2dh%02d", (currentTime/86400)%24,(currentTime/3600)%24,(currentTime/60)%60);
+   sprintf(s, "%ldd%2ldh%02ld", (currentTime/86400)%24,(currentTime/3600)%24,(currentTime/60)%60);
    ledModule->setDisplayToString(s,B00000010,1);    
    return;  
 

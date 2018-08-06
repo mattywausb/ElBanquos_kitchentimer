@@ -17,7 +17,7 @@
 #define PRESS_DURATION_FOR_RESET 2500  // milliseconds you must hold select to disable a timer
 #define PRESS_DURATION_SHORT 300  // milliseconds while a press counts as short 
 
-const long timer_interval_preset[]={180,330,600,1200}; // 3 min, 5.5 min, 10 min, 20 min
+const long timer_interval_preset[]={180,330,1200,3600}; // 3 min, 5.5 min, 20 min, 1 h
 
 #define MOCKUP_TIMER 0
 
@@ -52,7 +52,7 @@ void process_IDLE_MODE()
 {
   KitchenTimer *focussed_timer;
 
-
+  /* Timer Buttons */
   for(ui_focussed_timer_index=0;ui_focussed_timer_index<TIMER_COUNT;ui_focussed_timer_index++)
   {  
     focussed_timer=&myKitchenTimerList[ui_focussed_timer_index];
@@ -65,6 +65,13 @@ void process_IDLE_MODE()
         return;      
       }
     } 
+  }
+
+  /* Encoder got moved */
+  if(input_hasEncoderChangeEvent()) 
+  {
+    enter_PRESELECT_MODE();
+    return;
   }
 
   /* Automated acknowledgement */
@@ -84,12 +91,48 @@ void enter_PRESELECT_MODE(){
   #ifdef TRACE_CLOCK
     Serial.println(F("#PRESELECT_MODE"));
   #endif
-  ui_mode=PRESELECT_MODE;
+    ui_mode=PRESELECT_MODE;
+    ui_value_changed=true;
+    input_setEncoderRange(0,CONTROL_VALUE_MAX,1,false);  
+    input_setEncoderValue(convertTimeToControlvalue(DEFAULT_INTERVAL));
+    output_renderPreselectScene(myKitchenTimerList,convertControlvalueToTime(input_getEncoderValue()));    
 }
 
 void process_PRESELECT_MODE()
 {
+  KitchenTimer *focussed_timer;
 
+  /* Timer Button */
+  for(ui_focussed_timer_index=0;ui_focussed_timer_index<TIMER_COUNT;ui_focussed_timer_index++)
+  {  
+    focussed_timer=&myKitchenTimerList[ui_focussed_timer_index];
+    if(input_timerButtonGotReleased(ui_focussed_timer_index) )
+    {
+      if(focussed_timer->hasAlert()){
+        focussed_timer->acknowledgeAlert(); 
+      } else {
+        if(myKitchenTimerList[ui_focussed_timer_index].isOver() ||
+           myKitchenTimerList[ui_focussed_timer_index].isDisabled())  // timer has no duty
+           {
+            enter_SET_MODE();
+            return;
+           } else {
+            output_blockedSequence(myKitchenTimerList,ui_focussed_timer_index); 
+           }             
+        return;      
+      }
+    } 
+  }
+
+  /* Select Button */
+  if( input_selectIsPressed() && input_getCurrentPressDuration()>PRESS_DURATION_SHORT)
+  {
+    enter_IDLE_MODE(); 
+    return;
+  }
+
+  
+  output_renderPreselectScene(myKitchenTimerList,convertControlvalueToTime(input_getEncoderValue()));   
 }
 
 /* *************** SET_MODE ***************** */
@@ -288,8 +331,9 @@ if (value<136) return 900+(value-106)*30; // Until h 30min Step 0,5 min
 if (value<166) return 1800+(value-136)*60;  // Until 1h min Step 1 min
 if (value<190) return 3600+(value-166)*300; // Until 3h 0min Step 5 min
 if (value<274) return 10800+(value-190)*900;  // Until 24h 0min Step 15 min
-if (value<322) return 86400+(value-274)*3600; // Until 48h min Step 60 min
-if (value<378) return 172800+(value-322)*10800; // Until 168h min Step 180 min
+if (value<370) return 86400+(value-274)*1800; // Until 48h min Step 30 min
+if (value<538) return 172800+(value-370)*3600;  // Until 168h min Step 60 min
+return 604800+(value-538)*10800;  // infinity Step 180 min
 }
 
 long convertTimeToControlvalue(long totalSeconds)
@@ -303,8 +347,9 @@ if(totalSeconds<1800) return (totalSeconds-900)/30+106;
 if(totalSeconds<3600) return (totalSeconds-1800)/60+136;
 if(totalSeconds<10800) return (totalSeconds-3600)/300+166;
 if(totalSeconds<86400) return (totalSeconds-10800)/900+190;
-if(totalSeconds<172800) return (totalSeconds-86400)/3600+274;
-if(totalSeconds<604800) return (totalSeconds-172800)/10800+322;
+if(totalSeconds<172800) return (totalSeconds-86400)/1800+274;
+if(totalSeconds<604800) return (totalSeconds-172800)/3600+370;
+return (totalSeconds-604800)/10800+538;
 }
 
  #ifdef TRACE_ON 
