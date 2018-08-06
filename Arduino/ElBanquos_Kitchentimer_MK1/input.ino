@@ -391,8 +391,11 @@ void input_switches_scan_tick() {
   /* transfor high resulution encoder movement into encoder value */
   int tick_encoder_movement = encoder_movement;  // Freeze the value for upcoming operations
   if (tick_encoder_movement) {
-    input_encoder_change_event = true;
-    if(input_enabled) input_encoder_value += tick_encoder_movement * input_encoder_stepSize;
+    if(input_enabled && !input_selectIsPressed())
+    {
+      input_encoder_value += tick_encoder_movement * input_encoder_stepSize;
+      input_encoder_change_event = true;
+    }
     encoder_movement -= tick_encoder_movement; // remove the transfered value from the tracking
   }
 

@@ -228,42 +228,42 @@ void process_SET_MODE()
     return;
    }
 
-  if( input_selectGotReleased() && input_getCurrentPressDuration()<PRESS_DURATION_SHORT)
+  if( input_selectGotReleased() && input_getCurrentPressDuration()>PRESS_DURATION_SHORT)  return;
+
+  if( input_selectGotReleased() )
   {
-    if(input_getLastPressDuration()<PRESS_DURATION_SHORT) 
-    {
-    
-      if(ui_value_changed)  
-      { 
-        focussed_timer->setInterval(convertControlvalueToTime(input_getEncoderValue()));
-        focussed_timer->startCounting();
-        enter_IDLE_MODE();
-        return;
-      }
-      
-      if(focussed_timer->isOver())  
-      {
-        enter_IDLE_MODE();
-        return;
-       }
   
-      if(focussed_timer->isRunning()) 
-      {
-        focussed_timer->stopCounting();
-        output_holdSequence(myKitchenTimerList,ui_focussed_timer_index);
-        enter_IDLE_MODE();
-        return;   
-      }
-      
-      if(focussed_timer->isOnHold()) 
-      {
-        focussed_timer->startCounting();      
-        output_resumeSequence(myKitchenTimerList,ui_focussed_timer_index);
-        enter_IDLE_MODE();
-        return;   
-      } 
+    if(ui_value_changed)  
+    { 
+      focussed_timer->setInterval(convertControlvalueToTime(input_getEncoderValue()));
+      focussed_timer->startCounting();
+      enter_IDLE_MODE();
+      return;
     }
+    
+    if(focussed_timer->isOver())  
+    {
+      enter_IDLE_MODE();
+      return;
+     }
+
+    if(focussed_timer->isRunning()) 
+    {
+      focussed_timer->stopCounting();
+      output_holdSequence(myKitchenTimerList,ui_focussed_timer_index);
+      enter_IDLE_MODE();
+      return;   
+    }
+    
+    if(focussed_timer->isOnHold()) 
+    {
+      focussed_timer->startCounting();      
+      output_resumeSequence(myKitchenTimerList,ui_focussed_timer_index);
+      enter_IDLE_MODE();
+      return;   
+    } 
   }
+  
 
    /* Button  of other timer */
   for(int other_timer_index=0;other_timer_index<TIMER_COUNT;other_timer_index++)
