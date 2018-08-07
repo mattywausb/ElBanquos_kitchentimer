@@ -161,7 +161,7 @@ long input_getCurrentPressDuration()
 
 long input_getLastPressDuration()
 {
-  return input_enabled && last_press_end_time-last_press_start_time;
+  return  last_press_end_time-last_press_start_time;
 }
 
 
@@ -221,7 +221,7 @@ void input_setEncoderRange(int rangeMin, int rangeMax, int stepSize, bool wrap) 
   #endif
 }
 
-/* Diable input until all buttons have been released */
+/* Disable input until all buttons have been released */
 
 void input_pauseUntilRelease()
 {

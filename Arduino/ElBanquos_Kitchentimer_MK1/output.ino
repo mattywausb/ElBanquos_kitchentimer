@@ -120,7 +120,7 @@ void output_clearAllSequence ()
   #endif
 }
 
-void output_resumeSequence(KitchenTimer myKitchenTimerList[],byte ui_focussed_timer_index)
+void output_startTimerSequence(KitchenTimer myKitchenTimerList[],byte ui_focussed_timer_index)
 {
 
   ledModule->clearDisplay();

@@ -23,22 +23,22 @@ const long timer_interval_preset[]={180,330,1200,3600}; // 3 min, 5.5 min, 20 mi
 
 
 enum UI_MODES {
-  IDLE_MODE, // show time, check for alarms, check age of rds time 
+  IDLE_MODE, 
   PRESELECT_MODE,
+  DISPLAY_MODE,
   SET_MODE
 };
 UI_MODES ui_mode = IDLE_MODE; 
 
 
-byte ui_focussed_timer_index=MOCKUP_TIMER;  // until we have multi timer support we test everything with 3
-bool ui_value_changed=false;
-long ui_preselect_value=NO_TIME_SELECTION;
+byte ui_focussed_timer_index=MOCKUP_TIMER;  // until we have multi timer support we test everything with the mockup
 
 TM1638 ledAndKeymodule(4, 3, 2);  // the led+keys module is input and output, so core must own it
 
 KitchenTimer myKitchenTimerList[TIMER_COUNT];
 
-/* *************** IDLE_MODE ***************** */
+/* *************** IDLE_MODE ***************** 
+*/
 void enter_IDLE_MODE(){
   #ifdef TRACE_CLOCK
     Serial.println(F("#IDLE"));
@@ -56,18 +56,19 @@ void process_IDLE_MODE()
   for(ui_focussed_timer_index=0;ui_focussed_timer_index<TIMER_COUNT;ui_focussed_timer_index++)
   {  
     focussed_timer=&myKitchenTimerList[ui_focussed_timer_index];
-    if(input_timerButtonGotReleased(ui_focussed_timer_index) )
+    if(input_timerButtonGotReleased(ui_focussed_timer_index)&&input_getLastPressDuration()<PRESS_DURATION_SHORT )
     {
       if(focussed_timer->hasAlert()){
         focussed_timer->acknowledgeAlert(); 
       } else {
-        enter_SET_MODE_without_preselection();
+        if(focussed_timer->isDisabled()) enter_SET_MODE( timer_interval_preset[ui_focussed_timer_index] );  
+        else enter_DISPLAY_MODE();
         return;      
       }
     } 
   }
 
-  /* Encoder got moved */
+  /* Encoder Movement */
   if(input_hasEncoderChangeEvent()) 
   {
     enter_PRESELECT_MODE();
@@ -86,13 +87,13 @@ void process_IDLE_MODE()
 }
 
 
-/* *************** PRESELECT_MODE ***************** */
+/* *************** PRESELECT_MODE ***************** 
+*/
 void enter_PRESELECT_MODE(){
   #ifdef TRACE_CLOCK
     Serial.println(F("#PRESELECT_MODE"));
   #endif
     ui_mode=PRESELECT_MODE;
-    ui_value_changed=true;
     input_setEncoderRange(0,CONTROL_VALUE_MAX,1,false);  
     input_setEncoderValue(convertTimeToControlvalue(DEFAULT_INTERVAL));
     output_renderPreselectScene(myKitchenTimerList,convertControlvalueToTime(input_getEncoderValue()));    
@@ -118,20 +119,23 @@ void process_PRESELECT_MODE()
       if(focussed_timer->hasAlert()){
         focussed_timer->acknowledgeAlert(); 
       } else {
-        if(myKitchenTimerList[ui_focussed_timer_index].isOver() ||
-           myKitchenTimerList[ui_focussed_timer_index].isDisabled())  // timer has no duty
+        if(focussed_timer->isOver() ||
+           focussed_timer->isDisabled())  // timer has no duty
            {
-            enter_SET_MODE();
-            return;
+              focussed_timer->setInterval(convertControlvalueToTime(input_getEncoderValue()));
+              focussed_timer->startCounting();
+              output_startTimerSequence(myKitchenTimerList,ui_focussed_timer_index);
+              enter_IDLE_MODE();
+              return;
            } else {
             output_blockedSequence(myKitchenTimerList,ui_focussed_timer_index); 
-           }             
-        return;      
+           }                        
       }
+      return;  
     } 
   }
 
-  /* Select Button */
+  /* Select Button long */
   if( input_selectIsPressed() && input_getCurrentPressDuration()>PRESS_DURATION_SHORT)
   {
     enter_IDLE_MODE(); 
@@ -142,49 +146,26 @@ void process_PRESELECT_MODE()
   output_renderPreselectScene(myKitchenTimerList,convertControlvalueToTime(input_getEncoderValue()));   
 }
 
-/* *************** SET_MODE ***************** */
 
-
-/* depending on the timer status, we simlulate a preselection when timer was disabled  */ 
-void enter_SET_MODE_without_preselection()
-{
+/* *************** DISPLAY_MODE ***************** 
+*/
+void enter_DISPLAY_MODE(){
   #ifdef TRACE_CLOCK
-    Serial.println(F("#SET_MODE_with_timer_defaults"));
+    Serial.println(F("#DISPLAY_MODE"));
   #endif
-  
-  KitchenTimer *focussed_timer=&myKitchenTimerList[ui_focussed_timer_index];
 
-  input_setEncoderRange(0,CONTROL_VALUE_MAX,1,false);   
-
-  /* simulate presection when timer was disabled */
-  if(focussed_timer->isDisabled()) 
-  {   
-            input_setEncoderValue(convertTimeToControlvalue(timer_interval_preset[ui_focussed_timer_index]));     
-            ui_value_changed=true;         
-  } else ui_value_changed=false;  // Trigger capture of value with first encoder turn
-  enter_SET_MODE();
-}
-
-/* prepare the set mode: 
- *  
- */
-void enter_SET_MODE()
-{
-  #ifdef TRACE_CLOCK
-    Serial.println(F("#SET_MODE"));
-  #endif
-  if(!ui_value_changed)
-  {
-    input_setEncoderRange(-200,200,1,false);   // set encoder to track an initial movement 
-    input_setEncoderValue(0);  
-  }
-  ui_mode=SET_MODE;
+  input_setEncoderRange(-200,200,1,false);   // set encoder to track an initial movement 
+  input_setEncoderValue(0);  
+    
+  ui_mode=DISPLAY_MODE;
   output_clearAllSequence ();
   input_pauseUntilRelease();
+  
+  output_renderSetScene(myKitchenTimerList,myKitchenTimerList[ui_focussed_timer_index].getTimeLeft(),ui_focussed_timer_index);
 }
 
-void process_SET_MODE()
-{
+void process_DISPLAY_MODE() {
+  
    static bool select_short_press=false;
    
    KitchenTimer *focussed_timer=&myKitchenTimerList[ui_focussed_timer_index];
@@ -196,8 +177,7 @@ void process_SET_MODE()
      return;    
    }
 
-   /* Button of the timer */
-
+   /* Button of the timer very long */
    if( input_timerButtonIsPressed(ui_focussed_timer_index)
    && input_getCurrentPressDuration()>PRESS_DURATION_FOR_RESET)
    {
@@ -207,40 +187,25 @@ void process_SET_MODE()
        return;       
    }
    
+   /* Button of the timer short */
    if(input_timerButtonGotReleased(ui_focussed_timer_index)&& input_getCurrentPressDuration()<PRESS_DURATION_FOR_RESET ) {
-     if(ui_value_changed) {   
-       focussed_timer->setInterval(convertControlvalueToTime(input_getEncoderValue()));
-       focussed_timer->startCounting();
-     }
      enter_IDLE_MODE();
      return;    
    } 
 
-  /* Select Button */
+  /* Select Button  hold */
    if( input_selectIsPressed() && input_getCurrentPressDuration()>PRESS_DURATION_SHORT)
    {
-     if(ui_value_changed)
-     { 
-        enter_IDLE_MODE();
-        return;
-     }     
     output_renderSetScene_withLastTime(myKitchenTimerList,focussed_timer->getLastSetTime(),ui_focussed_timer_index); 
     return;
    }
 
-  if( input_selectGotReleased() && input_getCurrentPressDuration()>PRESS_DURATION_SHORT)  return;
+  if( input_selectGotReleased() && input_getLastPressDuration()>PRESS_DURATION_SHORT)  return;
 
+  /* Select button short */
   if( input_selectGotReleased() )
   {
-  
-    if(ui_value_changed)  
-    { 
-      focussed_timer->setInterval(convertControlvalueToTime(input_getEncoderValue()));
-      focussed_timer->startCounting();
-      enter_IDLE_MODE();
-      return;
-    }
-    
+      
     if(focussed_timer->isOver())  
     {
       enter_IDLE_MODE();
@@ -258,10 +223,121 @@ void process_SET_MODE()
     if(focussed_timer->isOnHold()) 
     {
       focussed_timer->startCounting();      
-      output_resumeSequence(myKitchenTimerList,ui_focussed_timer_index);
+      output_startTimerSequence(myKitchenTimerList,ui_focussed_timer_index);
       enter_IDLE_MODE();
       return;   
     } 
+  }
+  
+   /* Button  of other timer */
+  for(int other_timer_index=0;other_timer_index<TIMER_COUNT;other_timer_index++)
+  {
+    if(other_timer_index==ui_focussed_timer_index) continue;
+    
+    if(input_timerButtonGotPressed(other_timer_index)) {
+     if(myKitchenTimerList[other_timer_index].hasAlert()){
+        myKitchenTimerList[other_timer_index].acknowledgeAlert(); 
+        return;
+     } else {
+        ui_focussed_timer_index=other_timer_index;  // Switch focus to other timer
+        focussed_timer=&myKitchenTimerList[ui_focussed_timer_index];
+                input_pauseUntilRelease();
+        if(focussed_timer->isDisabled()) 
+        {
+          enter_IDLE_MODE();  
+          return;
+        }
+
+     }
+     } 
+   }
+  
+  /* Encoder change  */
+  
+  if(input_hasEncoderChangeEvent()) {
+    input_getEncoderValue(); // acknowledge the processing of the change to the input module
+    if(focussed_timer->isRunning() || focussed_timer->isOnHold()) 
+    {
+      enter_SET_MODE(focussed_timer->getTimeLeft());    
+      return ;             
+    } else {  // there is no timer value we can start from 
+      if(input_getEncoderValue()>0) enter_SET_MODE(CONTROL_VALUE_DEFAULT_UP);
+      else                          enter_SET_MODE(CONTROL_VALUE_DEFAULT_DN);
+      return;
+    }
+  }
+
+  /* Provide output */
+  output_renderSetScene(myKitchenTimerList,focussed_timer->getTimeLeft(),ui_focussed_timer_index);
+  
+}
+
+/* *************** SET_MODE ***************** 
+*/
+
+void enter_SET_MODE(long preselected_time)
+{
+  #ifdef TRACE_CLOCK
+    Serial.println(F("#SET_MODE"));
+  #endif
+  ui_mode=SET_MODE;
+  input_setEncoderRange(0,CONTROL_VALUE_MAX,1,false);   
+  input_setEncoderValue(convertTimeToControlvalue(preselected_time));  
+  output_clearAllSequence ();
+  input_pauseUntilRelease();
+}
+
+void process_SET_MODE()
+{
+   static bool select_short_press=false;
+   
+   KitchenTimer *focussed_timer=&myKitchenTimerList[ui_focussed_timer_index];
+   
+   /* UI Fallback, after brief time of no interaction */
+   if(input_getSecondsSinceLastEvent()>UI_FALLBACK_INTERVAL) 
+   {
+     enter_IDLE_MODE();
+     return;    
+   }
+
+   /* Button of the timer long */
+
+   if( input_timerButtonIsPressed(ui_focussed_timer_index)
+   && input_getCurrentPressDuration()>PRESS_DURATION_FOR_RESET)
+   {
+       focussed_timer->disable();
+       output_resetSequence(myKitchenTimerList,ui_focussed_timer_index);
+       enter_IDLE_MODE();
+       return;       
+   }
+   
+   /* Button of the timer short */
+   if(input_timerButtonGotReleased(ui_focussed_timer_index)&& input_getLastPressDuration()<PRESS_DURATION_SHORT ) 
+   {
+     focussed_timer->setInterval(convertControlvalueToTime(input_getEncoderValue()));
+     focussed_timer->startCounting();
+     output_startTimerSequence(myKitchenTimerList,ui_focussed_timer_index);
+     enter_IDLE_MODE();
+     return;    
+   } 
+
+   /* Select Button long */
+   if( input_selectIsPressed() && input_getCurrentPressDuration()>PRESS_DURATION_SHORT)
+   {
+        enter_IDLE_MODE();
+        return;
+   }
+
+  if( input_selectGotReleased() && input_getLastPressDuration()>PRESS_DURATION_SHORT)  return;
+
+  /* Select Button short */
+  if( input_selectGotReleased() )
+  {
+      focussed_timer->setInterval(convertControlvalueToTime(input_getEncoderValue()));
+      focussed_timer->startCounting();
+      output_startTimerSequence(myKitchenTimerList,ui_focussed_timer_index);
+      enter_IDLE_MODE();
+      return;
   }
   
 
@@ -271,11 +347,9 @@ void process_SET_MODE()
     if(other_timer_index==ui_focussed_timer_index) continue;
     
     if(input_timerButtonGotPressed(other_timer_index)) {
-     if(myKitchenTimerList[other_timer_index].hasAlert()){
+      if(myKitchenTimerList[other_timer_index].hasAlert()){
         myKitchenTimerList[other_timer_index].acknowledgeAlert(); 
-     } else {
-      if(ui_value_changed)  // user put some effort in selecting a time
-      {
+      } else {
         if(myKitchenTimerList[other_timer_index].isOver() ||
            myKitchenTimerList[other_timer_index].isDisabled())  // Other time has no duty
            {
@@ -285,39 +359,14 @@ void process_SET_MODE()
            } else {
             output_blockedSequence(myKitchenTimerList,other_timer_index); 
            }       
-      } else {
-        ui_focussed_timer_index=other_timer_index;  // Switch focus to other timer
-        enter_SET_MODE_without_preselection();
-        return;             
-      }
+       } 
      } 
-    }
-  }
-
-
-  /* React to encoder changes  */
-  int initial_encoderValue=0;
+   }
   
-  if(input_hasEncoderChangeEvent()) {
-    input_getEncoderValue(); // acknowledge the processing of the change to the input module
-    if(!ui_value_changed) 
-    {
-      if(focussed_timer->isRunning() || focussed_timer->isOnHold()) 
-      {
-        initial_encoderValue=convertTimeToControlvalue(focussed_timer->getTimeLeft());                  
-      } else {  // there is no timer value we can start from 
-        if(input_getEncoderValue()>0) initial_encoderValue=CONTROL_VALUE_DEFAULT_UP;
-        else                          initial_encoderValue=CONTROL_VALUE_DEFAULT_DN;
-      }
-      input_setEncoderRange(0,CONTROL_VALUE_MAX,1,false);   // would change the Value, so we must do this after checking the value
-      input_setEncoderValue(initial_encoderValue);     
-      ui_value_changed=true;  
-    }
-  }
 
-  /* Display the value, original or selected */
-  if(ui_value_changed) output_renderSetScene(myKitchenTimerList,convertControlvalueToTime(input_getEncoderValue()),ui_focussed_timer_index);
-  else output_renderSetScene(myKitchenTimerList,focussed_timer->getTimeLeft(),ui_focussed_timer_index);
+  /* Display the encoder value */
+  output_renderSetScene(myKitchenTimerList,convertControlvalueToTime(input_getEncoderValue()),ui_focussed_timer_index);
+
 }
 
 
@@ -429,6 +478,7 @@ void loop() {
     switch (ui_mode) {
           case IDLE_MODE:                 process_IDLE_MODE(); break;
           case PRESELECT_MODE:            process_PRESELECT_MODE(); break;
+          case DISPLAY_MODE:              process_DISPLAY_MODE(); break;
           case SET_MODE:                  process_SET_MODE(); break;
 
     }
