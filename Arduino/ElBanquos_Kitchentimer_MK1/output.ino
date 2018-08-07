@@ -9,7 +9,7 @@
 #endif
 
 #define DISPLAY_ACTIVE true
-#define DISPLAY_INTENSITY 2
+#define DISPLAY_INTENSITY 1
 
 #define BLINKCYCLE_FOCUS 1
 #define BLINKCYCLE_ALERT 2

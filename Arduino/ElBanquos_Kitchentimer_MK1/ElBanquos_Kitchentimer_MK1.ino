@@ -8,11 +8,11 @@
 //#define DEBUG_SCALE_TABLE 
 #endif
 
-#define DEFAULT_INTERVAL 600   // !0 Minutes
+#define DEFAULT_INTERVAL 600   // 10 Minutes
 #define TIMER_MAX_INTERVAL 603800  // Seconds of 7 days
 #define CONTROL_VALUE_MAX  convertTimeToControlvalue(TIMER_MAX_INTERVAL)
-#define CONTROL_VALUE_DEFAULT_UP  convertTimeToControlvalue(600)   // 10 Minutes as start value when turning upwards 
-#define CONTROL_VALUE_DEFAULT_DN  convertTimeToControlvalue(180)   // 3 Minutes as start value when turning downwards 
+#define DEFAULT_INTERVAL_UP  600   // 10 Minutes as start value when turning upwards 
+#define DEFAULT_INTERVAL_DN  600   // 10 Minutes as start value when turning downwards
 #define UI_FALLBACK_INTERVAL 10   // seconds, ui will fall back to idle wihtout interaction
 #define PRESS_DURATION_FOR_RESET 2500  // milliseconds you must hold select to disable a timer
 #define PRESS_DURATION_SHORT 500  // milliseconds while a press counts as short 
@@ -261,8 +261,8 @@ void process_DISPLAY_MODE() {
       enter_SET_MODE(focussed_timer->getTimeLeft());    
       return ;             
     } else {  // there is no timer value we can start from 
-      if(input_getEncoderValue()>0) enter_SET_MODE(CONTROL_VALUE_DEFAULT_UP);
-      else                          enter_SET_MODE(CONTROL_VALUE_DEFAULT_DN);
+      if(input_getEncoderValue()>0) enter_SET_MODE(DEFAULT_INTERVAL_UP);
+      else                          enter_SET_MODE(DEFAULT_INTERVAL_DN);  // There might be a use of different values depending on the turning direction
       return;
     }
   }
