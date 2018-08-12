@@ -75,4 +75,4 @@ Examples:
 * LED blink with the **rhythm of a heart**: timer is on **hold**
 
 # Detailied operation instructions
-(to be done in english. Check [german version](manual-de.html) for "inspiration")
+(to be done in english. Check [german version](https://mattywausb.github.io/ElBanquos_kitchentimer/docs/manual-de.html) for "inspiration")
