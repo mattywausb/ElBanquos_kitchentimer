@@ -6,7 +6,7 @@ Elbanquos Kitchentimer besteht aus folgenden Elementen:
 * Je Timer eine Status LED (Timer-Led, ggf. je nach Bauart in den den Taster integriert)
 * Zentraler Drehregler mit Druckfunktion
 
-![vision_1](vision-1.jpg "Concept")
+![vision_1](vision_1.jpg "Concept")
 
 # Schnellstart
 Um einen Timer zu aktivieren ist folgendes zu tun
