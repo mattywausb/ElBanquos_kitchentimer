@@ -8,15 +8,12 @@ When preparing food I have to keep track of multiple countdowns. Even though one
 * Smartphone normally switches of the screen, so you can't see the current state (or they keep screen on and drain smart phone battery for neraly nothing)
 * Smartphone somtimes is needed to check recepies, problem solutions or communicating (is that so?). Again you cannot see the current state of the timers just by looking at the device
 
-
 # Features
-
 * Track up to 4 timers (Well... limited by the number of display and interaction elements, you can extend this, with little modification)
 * Main display mode shows all timers (no need to push a button to see the timers)
 * wide range of intervals (1 second to 6 days (and thats only a coded limit) )
 
- ## Easy and intuitive 2 Finger Operations
-
+## Easy and intuitive 2 Finger Operations
 * Set and start timer
 * Granularity of stepping adapts to total interval (there is normally no need to scroll over every minute, when the interval is more than an hour)
 * Acknowledge alarm
@@ -25,19 +22,6 @@ When preparing food I have to keep track of multiple countdowns. Even though one
 * dismiss timer
 * check the inital time, the timer started from
 * measure time when timer is over
-
-* Track up to "n" Timers (normally 4, but this limit comes from the amount of buttons and displays to be used)
-* Very easy 2 finger operations:
-  * Set and start timer
-  * Acknowledge alarm
-  * Change timer (necessary when something irregular happened on the kitchen process)
-  * put timer on hold
-  * dismiss timer
-* Timer Intervall
-  * 1s - 2 day's
-  * Stepping adapted to total interval (1s - 1 hour) 
-* Intuitive and widly readable display of timer state
-  * Off/Running/on Hold/Alarm/Time over
   
 # What you will find in the repository
 * Arduino sketch for the timer
