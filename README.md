@@ -25,6 +25,8 @@ When you can't buy it, you can build it, so this is what I implement:
 # What you will find in the repository
 * Arduino sketch for the timer
 * Fritzing sketch for the hardware used in the implementation
+* Manuals
+    * [English](docs/manual-en.md)
 
 # How can you use it
 * You can just build the timer by yourself using the same parts (check the fritzing sketch)
