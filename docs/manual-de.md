@@ -9,23 +9,22 @@ Elbanquos Kitchentimer besteht aus folgenden Elementen:
 ![vision_1](vision_1.jpg "Concept")
 
 # Schnellstart
-Um einen Timer zu aktivieren ist folgendes zu tun
-* Taster eines inaktiven* Timers drücken -> Es wird eine fest vorprogrammierte Laufzeit für diesen Timer vorgeschlagen. Die Led des Timers blinkt.  (*inaktiv=Timer-Led ist dauerhaft aus,auf dem Display leuchtet nur der Dezimalpunkt für den Timer) 
+Um einen Timer zu **aktivieren** ist folgendes zu tun
 * Mit dem zentralen Drechknopf die gewünschte Zeit einstellen
-* Zeit mit einem Druck auf den zentralen Drehknopf eingeben -> der Timer startet, auf der Displayposition des Timers erscheint kurz "Go",  im Display wird die Restzeit auf der Position des Timers angezeigt, die Timer-Led leuchtet jetzt dauerhaft
+* Taster eines inaktiven* Timers drücken ->  der Timer startet, auf der Displayposition des Timers erscheint kurz "Go",  im Display wird die Restzeit auf der Position des Timers angezeigt, die Timer-Led leuchtet jetzt dauerhaft
 
 **Erreicht der Timer 0 Sekunden** ertönt das Alarmsignal und die Ziffern des Timers blinken mit einem Alarmmuster.
-Der Alarm kann mit einem Druck auf den Taster des Timers bestätigt werden und wird damit abgeschaltet. Nach 15 Sekunden schaltet sich der Alarm von selbst ab, solange keine andere Bedienhandlung erfolgt. 
+Der Alarm kann mit einem Druck auf den Taster des Timers bestätigt werden und wird damit abgeschaltet. Nach 15 Sekunden schaltet sich der Alarm von selbst ab. 
 
 Der Timer befindet sich danach im **Nachlaufmodus**. Die Timer-Led ist wieder dauerhaft aus und auf dem Display wird die, seit dem Alarm verstrichene Zeit, abwechselnd mit "_._" angezeigt. Ab 2 Minuten wird nur noch "_._" angezeigt. Mittels des Tasters zum Timer kann die seit dem Alarm verstrichende Zeit abgerufen werden. 
 
-Um den Timer komplett zu deaktivieren ist folgendes zu tun:
+Um den Timer komplett zu **deaktivieren** ist folgendes zu tun:
 * Taster des Timers drücken um die Nachlaufzeit anzuzeigen
 * Taster des Timers drücken und 5 Sekunden halten -> Für den Timer wird kurz "OF angezeigt und der Timer ist danach wieder im Ruhezustand
 
 # Die Zeitanzeige im Detail
-## Kompakte Darstellung (Hauptanzeige)
-In der kompakten Darstellung werden die Zeiten von allen Timern parallel nebeneinander angezeigt. Für jeden Timer sind zwei Ziffern der Anzeige passend zur Position des Tasters und der Timer-Led vorgesehen. Die Darstellung ist wie folgt:
+## Hauptanzeige (Kompakte Darstellung aller Timer)
+Auf der Hauptanzeige werden die Zeiten von allen Timern parallel nebeneinander dargestellt. Für jeden Timer sind zwei Ziffern der Anzeige passend zur Position des Tasters und der Timer-Led vorgesehen. Die Darstellung ist wie folgt:
 * Zeitinformation
     * "zz" (Zwei Ziffern, ohne Punkt, abwärtslaufend) - verbleibende Sekunden zz bis zum Alarm 
     * "y.z" (Zwei Ziffern, mit einem Punkte getrennt) - ab 60 Sekunden: Vor dem Punkt : Verbleibende Minuten y, Nach dem Punk verbeibende 10 Sekundenschritte
@@ -53,9 +52,8 @@ Beispiele:
     * Timer 3 ist dektiert
     * Timer 4 hat noch 4 Minuten und mindestens 50-59 Sekunden
  
-## Ausführliche Darstellung
-In der ausführlichen Darstellung wird ein einzelne Zeit angezeigt. Je nach Bedienhandlung ist dies die Zeit eines Timers oder die gerade in der Einstellung befindliche Zeit. 
-Es gibt zwei Formate der Darstellung:
+## Anzeige einer einzelnen Zeit
+Bei der Auswahl eines Timers und für die Einstellung der Zeit gibt zwei Formate der Darstellung:
 
 * xxhyy.zz - Für alle Werte unter 24 Stunden wird die Stunde x, die Minuten yy und die Sekunden zz angezeigt
 * vdxxhyy. - Wert größer 24 Studen werden mit der Anzahl Tage v, die Stunden xx und Minuten yy angezeigt.
@@ -69,26 +67,27 @@ Beispiele:
 * LED dauerhaft **an**: Der Timer **läuft**
 * LED **blinkt schnell** mit kurzen Pausen: Der Timer hat einen **Alarm**
 * LED **blinkt regelmäßig**: Der Timer ist gerade zur Detailanzeige oder Einstellung **ausgewählt**
-* LED setzt kurz im **"Herzryhtmus"** aus: Der Timer ist im **Pausemodus**
+* LED erlischt kurz im **"Herzschlagryhtmus"**: Der Timer ist im **Pausemodus**
 
 # Die Funktionen im Einzelnen
 Alle Funktionen werden hier ausgehend von der Hauptanzeige(siehe oben) beschrieben. Diese erreicht man im Zweifelsfall immer durch kurzes Warten (15 Sekunden).
-## Timer Einstellen und Starten
+## Timer einstellen und starten
 Anmerkung vorab: Um auch große Zeitintervalle effizient erreichen zu können passt sich der Drehregler situativ an. Dadurch kann nicht für jedes Intervall eine sekundengenaue Einstellung erfolgen (Weitere Details dazu im Anhang "Stufung der Einstellintervalle"). 
-### Variante 1 
+
+### Variante 1 (Schnellstart)
+* Mit dem **Drehregler** eine Zeit einstellen (Die erste Bewegung des Reglers setzt diese auf 10 Minuten).
+* **Taster** eines **nicht laufenden** Timers (_LED dauerhaft aus_) **drücken** -> Der Timer wird gestartet.
+
+Solange noch kein Timer ausgewählt wurde, kann die Eingabe durch langes drücken des Drehreglers abgebrochen werden. 
+Die Eingabe wird ebenfalls abgebrochen, wenn man 15 Sekunden keine Bedienhandlung vornimmt.
+
+### Variante 2
 * **Taster** eines **deaktivierten** Timers drücken -> für den Timer _vorprogrammierte Vorschlagszeit_ erscheint,Timer-Led blinkt
 * Mit dem **Drehregler** die Zeit anpassen
 * Timer starten indem man auf den **Drehregler** drückt _oder_ erneut die **Taste** des Timers betätigt
 * Option: Drückt man stattdessen die Taste eines anderen inaktiven Timers, wird auf diesen als Ziel für die eingestellte Zeit umgeschaltet. Ein erneuter Druck auf dessen Taster oder den Drehknopf startet diesen Timer. Der ursprüngich ausgewählte Timer bleibt dann unberührt.
 
 Die Eingabe durch langes drücken des Drehreglers abgebrochen werden. 
-Die Eingabe wird ebenfalls abgebrochen, wenn man 15 Sekunden keine Bedienhandlung vornimmt.
-
-### Variante 2
-* Mit dem **Drehregler** eine Zeit einstellen (Die erste Bewegung des Reglers startet mit der Zeit von 10 Minuten).
-* **Taster** eines **nicht laufenden** Timers (_LED dauerhaft aus_) **drücken** -> Der Timer wird gestartet.
-
-Solange noch kein Timer ausgewählt wurde, kann die Eingabe durch langes drücken des Drehreglers abgebrochen werden. 
 Die Eingabe wird ebenfalls abgebrochen, wenn man 15 Sekunden keine Bedienhandlung vornimmt.
 
 ## Timer Restzeit anzeigen
