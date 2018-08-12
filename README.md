@@ -27,8 +27,8 @@ When preparing food I have to keep track of multiple countdowns. Even though one
 * Arduino sketch for the timer
 * Fritzing sketch for the hardware used in the implementation
 * Manuals
-    * [English](docs/manual-en.html)
-    * [German](docs/manual-de.html)
+    * [English](https://mattywausb.github.io/ElBanquos_kitchentimer/docs/manual-en.html)
+    * [German](https://mattywausb.github.io/ElBanquos_kitchentimer/docs/manual-de.html)
 
 # How can you use it
 * You can just build the timer by yourself using the same parts (check the fritzing sketch)
