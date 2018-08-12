@@ -37,5 +37,5 @@ When preparing food I have to keep track of multiple countdowns. Even though one
   * Kind of buttons input methods
   * sound generation
 
-# Mode Details and manual 
+# More Details 
 * check the wiki
