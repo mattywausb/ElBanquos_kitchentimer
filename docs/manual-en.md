@@ -1,6 +1,6 @@
 # Description of the device
 Elbanquos Kitchentimer consist of the following elements:
-* 8 diget display, using 2 digits for ervery timer or all digits for showing detailled time information
+* 8 digit display, using 2 digits for ervery timer or all digits for showing detailled time information
 * one button for every timer
 * one state led for every timer (integrated in the button)
 * one general knob to adjust time values (can also be pushed)
@@ -75,4 +75,4 @@ Examples:
 * LED blink with the **rhythm of a heart**: timer is on **hold**
 
 # Detailied operation instructions
-(to be done in english. Check german version for "inspiration")
+(to be done in english. Check [german version](manual-de.html) for "inspiration")
