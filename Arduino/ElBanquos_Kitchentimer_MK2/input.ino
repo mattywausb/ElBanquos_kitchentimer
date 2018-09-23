@@ -7,8 +7,11 @@
 #ifdef TRACE_ON
 #define TRACE_INPUT 1
 //#define TRACE_INPUT_HIGH 1
-//#define TRACE_INPUT_traceValue_acceleration
+#define TRACE_INPUT_traceValue_acceleration
 #endif
+
+
+
 
 /* Port constants --> check the IDS Function */
 
@@ -16,27 +19,31 @@
 
 const byte switch_pin_list[] = {11,  // ENCODER A
                                 12,    // ENCODER B
-                                10,    // BUTTON A SELECT ( ENCODER PUSH)
-                                2,     // Timer 1
-                                3,     // Timer 2
-                                4,     // Timer 3
-                                5      // Timer 4 
+                                10    // BUTTON A SELECT ( ENCODER PUSH)
+
                                };
+
+const byte button_for_timer[] = {1,3,5,7}; // Mapping of timers to buttons on the board
+
+
+  
                                 
+
 const unsigned int debounce_mask[] = { /* every bit is 2 ms */
   0x0007,    // ENCODER A
   0x0007,    // ENCODER B
   0x0007,    // BUTTON A SELECT ( ENCODER PUSH)
-  0x0007,    // Timer 1
-  0x0007,    // Timer 2
-  0x0007,    // Timer 3
-  0x0007,    // Timer 4
 };
 #define INPUT_PORT_COUNT sizeof(switch_pin_list)
-#define INPUT_ANALOG_PORT_INDEX_OFFSET 3
-#define INPUT_BUTTON_INDEX_OFFSET 2
-#define INPUT_ANALOG_HIGH_THRESHOLD 500
 
+
+TM1638 *buttonModule;
+byte buttons_current_state = 0;
+byte buttons_last_state = 0;
+byte buttons_gotPressed_flag = 0;
+byte buttons_gotReleased_flag = 0;
+unsigned long buttons_last_read_time = 0;
+#define BUTTON_MODULE_COOLDOWN 10
 
 volatile bool setupComplete = false;
 
@@ -45,7 +52,6 @@ volatile unsigned int raw_state;
 volatile unsigned int debounced_state = 0; /* Debounced state with history to last cycle managed by the ISR */
 volatile unsigned long input_last_change_time = 0;
 
-volatile int input_max_analog_read=0;
 
 unsigned int tick_state = 0;              /* State provided in the actual tick, with change indication to last tick */
 
@@ -74,12 +80,6 @@ volatile int traceValue_turn_interval=0;
 #define INPUT_BUTTON_A_GOT_PRESSED_PATTERN   0x0010
 #define INPUT_BUTTON_A_GOT_RELEASED_PATTERN  0x0020
 
-#define INPUT_BUTTON_TIMER1_BITS                  0x00c0
-#define INPUT_BUTTON_TIMER1_IS_PRESSED_PATTERN    0x00c0
-#define INPUT_BUTTON_TIMER1_GOT_PRESSED_PATTERN   0x0040
-#define INPUT_BUTTON_TIMER1_GOT_RELEASED_PATTERN  0x0080
-
-#define INPUT_ALL_BUTTON_STATE_MASK 0xfff0
 
 
 /* Variables for debounce handling */
@@ -110,6 +110,10 @@ bool input_encoder_change_event = false;
 unsigned long last_press_start_time=0;
 unsigned long last_press_end_time=0;
 bool input_enabled=true;
+
+
+
+
 
 
 /* ********************************************************************************************************** */
@@ -163,17 +167,24 @@ long input_getLastPressDuration()
 
 bool input_timerButtonGotPressed(byte buttonIndex)
 {
-  return input_enabled && (tick_state & (INPUT_BUTTON_TIMER1_BITS<<buttonIndex*2)) == INPUT_BUTTON_TIMER1_GOT_PRESSED_PATTERN<<buttonIndex*2; 
+  return input_enabled && bitRead(buttons_gotPressed_flag, button_for_timer[buttonIndex]); 
 }
 
 bool input_timerButtonIsPressed(byte buttonIndex)
 {
-  return input_enabled && (tick_state & (INPUT_BUTTON_TIMER1_BITS<<buttonIndex*2)) == INPUT_BUTTON_TIMER1_IS_PRESSED_PATTERN<<buttonIndex*2;
+  return input_enabled && bitRead(buttons_current_state, button_for_timer[buttonIndex]);
 }
 
 bool input_timerButtonGotReleased(byte buttonIndex)
 {
-  return input_enabled && (tick_state & (INPUT_BUTTON_TIMER1_BITS<<buttonIndex*2)) == INPUT_BUTTON_TIMER1_GOT_RELEASED_PATTERN<<buttonIndex*2; 
+  return input_enabled && bitRead(buttons_gotReleased_flag, button_for_timer[buttonIndex]); 
+}
+
+
+/* trace function */
+byte input_get_buttonModulePattern()
+{
+  return buttons_current_state;
 }
 
 /* ------------- Encoder state --------------- */
@@ -217,6 +228,11 @@ void input_pauseUntilRelease()
   input_enabled=false;
 }
 
+
+
+
+
+
 /* *************************** internal implementation *************************** */
 
  
@@ -236,25 +252,14 @@ ISR(TIMER1_COMPA_vect)
                     | (debounced_state & INPUT_CURRENT_BITS);
 
   /* Get state of all switches */
-  #ifdef TRACE_INPUT_HIGH
-    input_max_analog_read=0;
-  #endif
   for (byte i = 0; i < INPUT_PORT_COUNT; i++) { // for all input ports configured
 
     // Push  actual reading into the raw state registers
     raw_state_register[i] <<= 1;
-    if(i<INPUT_ANALOG_PORT_INDEX_OFFSET) 
-    {
-      raw_state_register[i] |= !digitalRead(switch_pin_list[i]);
-    } else {
-      #ifdef TRACE_INPUT_HIGH
-        input_max_analog_read=max(analogRead(switch_pin_list[i]),input_max_analog_read);
-      #endif
-      if(analogRead(switch_pin_list[i])>INPUT_ANALOG_HIGH_THRESHOLD) raw_state_register[i] |=0x1;
-    }
-    bitWrite(raw_state, i * 2, raw_state_register[i] & 0x0001); // copy state also to current status byte */
+    raw_state_register[i] |= !digitalRead(switch_pin_list[i]);
+    bitWrite(raw_state, i * 2, raw_state_register[i] & 0x0001); /* and the current status bits */
 
-    // if raw state is stable copy it to debounced state
+    // if raw state is stable  copy it to debounced state
     if ((raw_state_register[i] & 0x001f) == 0x0000) bitClear(debounced_state, i << 1);
     else if ((raw_state_register[i]&debounce_mask[i]) == debounce_mask[i]) bitSet(debounced_state, i << 1);
   }
@@ -350,24 +355,40 @@ void input_switches_scan_tick() {
    }
   #endif
 
-  #ifdef TRACE_INPUT_HIGH
-      Serial.print(("trace input high: max Analog read"));
-      Serial.println(input_max_analog_read);
-  #endif
-
   /* copy processed tick  state to history bits  and take debounced as new value */
   tick_state = (tick_state & INPUT_CURRENT_BITS) << 1
                | (debounced_state & INPUT_CURRENT_BITS);
 
-
-  /* Track pressing time */
-  for (int i =INPUT_BUTTON_INDEX_OFFSET;i<INPUT_PORT_COUNT;i++)
+  /* capture buttonsModule states, prevent bouncing with simple cooldown  */
+  buttons_last_state = buttons_current_state;
+  if (millis() - buttons_last_read_time > BUTTON_MODULE_COOLDOWN)
   {
-    if((tick_state & (INPUT_BUTTON_A_BITS<<i*2)) == INPUT_BUTTON_A_GOT_PRESSED_PATTERN<<i*2) last_press_end_time =last_press_start_time=millis();
-    if((tick_state & (INPUT_BUTTON_A_BITS<<i*2)) == INPUT_BUTTON_A_GOT_RELEASED_PATTERN<<i*2) last_press_end_time=millis();
+    buttons_current_state = buttonModule->getButtons();
+    buttons_last_read_time = millis();
   }
 
-  /* transfer high resolution encoder movement into encoder value */
+  /* derive state change information for the button module  */
+  buttons_gotPressed_flag = (buttons_last_state ^ buttons_current_state)&buttons_current_state;
+  buttons_gotReleased_flag = (buttons_last_state ^ buttons_current_state) & ~buttons_current_state;
+  
+
+
+  if ((buttons_last_state ^ buttons_current_state)) // at least one button changed state
+  {
+    input_last_change_time = millis(); // Reset the globel age of interaction
+    #ifdef TRACE_INPUT
+      Serial.print(buttons_current_state, BIN); Serial.print(F("\t "));
+      Serial.print(buttons_gotPressed_flag, BIN); Serial.print(F("\t "));
+      Serial.println(buttons_gotReleased_flag, BIN);
+    #endif
+  }
+
+  /* Track pressing time */
+  if(buttons_gotPressed_flag || input_selectGotPressed()) last_press_end_time =last_press_start_time=millis();
+  if(buttons_gotReleased_flag || input_selectGotReleased()) last_press_end_time=millis();
+
+
+  /* transfor high resulution encoder movement into encoder value */
   int tick_encoder_movement = encoder_movement;  // Freeze the value for upcoming operations
   if (tick_encoder_movement) {
     if(input_enabled && !input_selectIsPressed())
@@ -382,7 +403,7 @@ void input_switches_scan_tick() {
   if (input_encoder_value > input_encoder_rangeMax)      input_encoder_value = input_encoder_wrap ? input_encoder_rangeMin : input_encoder_rangeMax;
   else if (input_encoder_value < input_encoder_rangeMin) input_encoder_value = input_encoder_wrap ? input_encoder_rangeMax : input_encoder_rangeMin;
 
-  if(tick_state & INPUT_ALL_BUTTON_STATE_MASK ==0x00)  input_enabled=true; // enable input when all is released and settled
+  if(buttons_current_state==0&& buttons_last_state==0)  input_enabled=true; // enable input when all is released and settled
 
 } // void input_switches_tick()
 
@@ -392,13 +413,17 @@ void input_switches_scan_tick() {
 /* ***************************       S E T U P           ******************************
 */
 
-void input_setup() {
+void input_setup(TM1638 *buttonModuleToUse) {
+
+  /* Register button Module we need to ask */
+  buttonModule = buttonModuleToUse;
 
   /* Initialize switch pins and raw_state_register array */
-  for (byte switchIndex = 0; switchIndex < INPUT_ANALOG_PORT_INDEX_OFFSET ; switchIndex++) {
+  for (byte switchIndex = 0; switchIndex < INPUT_PORT_COUNT ; switchIndex++) {
     pinMode(switch_pin_list[switchIndex], INPUT_PULLUP);
     raw_state_register[switchIndex] = 0;
   }
+  pinMode(PORT_MAIN_SWITCH, INPUT_PULLUP);
 
   /* Initalize the encoder storage */
   input_setEncoderRange(0, 1, 1, 1); /* Set Ecnoder to binary function  until we get better configuration */
@@ -409,8 +434,8 @@ void input_setup() {
   TCCR1A = 0;
   TCCR1B = 0;
   TCNT1 = 0;                // Register mit 0 initialisieren
-  //OCR1A = 62  ;             // Output Compare für call alle 1 ms https://timer-interrupt-calculator.simsso.de/
-  //OCR1A = 124  ;             // Output Compare für call alle 2 ms https://timer-interrupt-calculator.simsso.de/
+  OCR1A = 62  ;             // Output Compare für call alle 1 ms https://timer-interrupt-calculator.simsso.de/
+  OCR1A = 124  ;             // Output Compare für call alle 2 ms https://timer-interrupt-calculator.simsso.de/
   OCR1A = 186  ;             // Output Compare für call alle 3 ms https://timer-interrupt-calculator.simsso.de/
   TCCR1B |= (1 << CS12);    // 256 als Prescale-Wert spezifizieren
   TIMSK1 |= (1 << OCIE1A);  // Timer Compare Interrupt aktivieren
