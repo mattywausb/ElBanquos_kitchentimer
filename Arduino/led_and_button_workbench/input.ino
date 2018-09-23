@@ -5,8 +5,9 @@
 // Activate general trace output
 
 #ifdef TRACE_ON
-#define TRACE_INPUT 1
-//#define TRACE_INPUT_HIGH 1
+#define TRACE_INPUT 
+//#define TRACE_INPUT_HIGH 
+//#define TRACE_INPUT_ANALOG
 //#define TRACE_INPUT_traceValue_acceleration
 #endif
 
@@ -54,10 +55,18 @@ volatile byte traceValue_acceleration=0;
 volatile int traceValue_turn_interval=0;
 #endif
 
+/* Generic button bit pattern (Button 0) */
+
+#define INPUT_0_BITS 0x0003
+#define INPUT_0_IS_ON_PATTERN 0x0003
+#define INPUT_0_SWITCHED_ON_PATTERN 0x0001
+#define INPUT_0_SWITCHED_OFF_PATTERN 0x0002
+
+
+/* Element specific  button bit pattern */
 #define INPUT_BITIDX_ENCODER_A 0
 #define INPUT_BITIDX_ENCODER_B 2
-#define INPUT_BITIDX_BUTTON_A 4
-#define INPUT_BITIDX_BUTTON_B 6
+
 /*                                         76543210 */
 #define INPUT_ENCODER_A_BITS              0x0003
 #define INPUT_ENCODER_A_CLOSED_PATTERN    0x0001
@@ -147,8 +156,8 @@ byte input_selectGotReleased()
 
 long input_getCurrentPressDuration()
 {
-  #ifdef TRACE_INPUT
-    Serial.print(F("input CurrentPressDuration:"));
+  #ifdef TRACE_INPUT_HIGH
+    Serial.print(F("TRACE_INPUT_HIGH:input CurrentPressDuration:"));
     Serial.println(millis()-last_press_start_time);
   #endif
     
@@ -202,7 +211,7 @@ void input_setEncoderRange(int rangeMin, int rangeMax, int stepSize, bool wrap) 
   input_encoder_wrap = wrap;
   input_encoder_stepSize = stepSize;
   #ifdef TRACE_INPUT
-    Serial.print(F("input_setEncoderRange:"));
+    Serial.print(F("TRACE_INPUT input_setEncoderRange:"));
     Serial.print(rangeMin); Serial.print(F("-"));
     Serial.print(rangeMax); Serial.print(F(" Step "));
     Serial.print(stepSize); Serial.print(F(" Wrap "));
@@ -236,7 +245,7 @@ ISR(TIMER1_COMPA_vect)
                     | (debounced_state & INPUT_CURRENT_BITS);
 
   /* Get state of all switches */
-  #ifdef TRACE_INPUT_HIGH
+  #ifdef TRACE_INPUT_ANALOG
     input_max_analog_read=0;
   #endif
   for (byte i = 0; i < INPUT_PORT_COUNT; i++) { // for all input ports configured
@@ -247,7 +256,7 @@ ISR(TIMER1_COMPA_vect)
     {
       raw_state_register[i] |= !digitalRead(switch_pin_list[i]);
     } else {
-      #ifdef TRACE_INPUT_HIGH
+      #ifdef TRACE_INPUT_ANALOG
         input_max_analog_read=max(analogRead(switch_pin_list[i]),input_max_analog_read);
       #endif
       if(analogRead(switch_pin_list[i])>INPUT_ANALOG_HIGH_THRESHOLD) raw_state_register[i] |=0x1;
@@ -350,7 +359,7 @@ void input_switches_scan_tick() {
    }
   #endif
 
-  #ifdef TRACE_INPUT_HIGH
+  #ifdef TRACE_INPUT_ANALOG
       Serial.print(("trace input high: max Analog read"));
       Serial.println(input_max_analog_read);
   #endif
@@ -363,8 +372,20 @@ void input_switches_scan_tick() {
   /* Track pressing time */
   for (int i =INPUT_BUTTON_INDEX_OFFSET;i<INPUT_PORT_COUNT;i++)
   {
-    if((tick_state & (INPUT_BUTTON_A_BITS<<i*2)) == INPUT_BUTTON_A_GOT_PRESSED_PATTERN<<i*2) last_press_end_time =last_press_start_time=millis();
-    if((tick_state & (INPUT_BUTTON_A_BITS<<i*2)) == INPUT_BUTTON_A_GOT_RELEASED_PATTERN<<i*2) last_press_end_time=millis();
+    if((tick_state & (INPUT_0_BITS<<(i*2))) == INPUT_0_SWITCHED_ON_PATTERN<<(i*2)) 
+    {
+      last_press_end_time =last_press_start_time=millis();
+      #ifdef TRACE_INPUT_HIGH
+        Serial.print(("TRACE_INPUT_HIGH:press detected of "));Serial.println(i);
+      #endif     
+    }
+    if((tick_state & (INPUT_0_BITS<<(i*2))) == INPUT_0_SWITCHED_OFF_PATTERN<<(i*2)) 
+    {
+      last_press_end_time=millis();
+      #ifdef TRACE_INPUT_HIGH
+        Serial.println(("TRACE_INPUT_HIGH:release detected"));Serial.println(i);
+      #endif     
+    }
   }
 
   /* transfer high resolution encoder movement into encoder value */

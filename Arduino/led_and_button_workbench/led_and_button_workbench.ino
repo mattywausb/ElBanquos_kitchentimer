@@ -27,6 +27,9 @@ void loop() {
         dev_led_rg_set_immediate(i,button_color[i]);
         output_clearDisplay();
       }
+      if(input_timerButtonIsPressed(i)) {
+        input_getCurrentPressDuration();
+      }
       if(input_timerButtonGotReleased(i)) {
         Serial.print("Timer button got released:");
         Serial.print(i);
@@ -35,10 +38,11 @@ void loop() {
       }
     }
     if(input_selectGotPressed()) {
-        Serial.println("Select button got pressed:");
+        Serial.println("Select button got pressed");
      }
     if(input_selectGotReleased()) {
-        Serial.println("Select button got released");
+        Serial.print("Select button got released after ");
+        Serial.println(input_getLastPressDuration());
      }
     if(input_hasEncoderChangeEvent() )
     {
