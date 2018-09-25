@@ -1,12 +1,18 @@
 #include "mainSettings.h"
 #include "kitchenTimer.h"
 
-#include <TM1638.h>
+#include <LedControl.h>
 
 #ifdef TRACE_ON
 #define TRACE_OUTPUT_SEQUENCE
 #define TRACE_OUTPUT_HIGH
 #endif
+
+#define LED7SEG_DATA_PIN 8
+#define LED7SEG_LOAD_PIN 7
+#define LED7SEG_CLK_PIN 6
+
+LedControl led7seg=LedControl(LED7SEG_DATA_PIN,LED7SEG_CLK_PIN,LED7SEG_LOAD_PIN,1);
 
 #define DISPLAY_ACTIVE true
 #define DISPLAY_INTENSITY 1
@@ -26,7 +32,16 @@ byte output_blinkCycleFlags=0;
 
 byte output_ledPattern=0;
 
-TM1638 *ledModule;
+
+
+/*  ************************ simple Operations **************************
+ *  *********************************************************************
+ */
+
+void output_clearDisplay()
+{
+  led7seg.clearDisplay(0);
+}
 
 
 /*  ************************  scenes  ***********************************
@@ -42,30 +57,27 @@ void output_renderIdleScene(KitchenTimer  myKitchenTimerList[]) {
   
   for(int i=0;i<TIMER_COUNT;i++)
   {
-    renderTimerCompact(myKitchenTimerList[i],i*2);
-    setLedBitByTimerStatus(myKitchenTimerList[i],i*2+1);  
+    renderTimerCompact(myKitchenTimerList[i],i);
+    setLedBitByTimerStatus(i,myKitchenTimerList[i]);  
   }
- 
-  ledModule->setLEDs(output_ledPattern);
+  dev_led_rg_show();
 }
 
 /* ************ Preselect scene *************************** */
 void output_renderPreselectScene(KitchenTimer myKitchenTimerList[],long selected_time)
 {
   determineBlinkCycles(); 
-  ledModule->setDisplayToString(" ",0,0);
   renderTimeLong(selected_time);
   for(int i=0;i<TIMER_COUNT;i++)
   {
-    setLedBitByTimerStatus(myKitchenTimerList[i],i*2+1);  
+    setLedBitByTimerStatus(i,myKitchenTimerList[i]);  
   } 
-  ledModule->setLEDs(output_ledPattern);
+  dev_led_rg_show();
 }
 
 /* ************ Set scene *************************** */
 
 void output_renderSetScene(KitchenTimer myKitchenTimerList[],long selected_time, byte targetTimer) {
-  ledModule->setDisplayToString(" ",0,0);
   SetScene(myKitchenTimerList,selected_time,targetTimer);  
 }
 
@@ -76,9 +88,9 @@ void output_renderSetScene_withLastTime (KitchenTimer myKitchenTimerList[],long 
   #endif
   if(selected_time!=0) 
   {
-    ledModule->setDisplayToString("A",0,0);
+    led7seg.setChar(0,7,65,false); // Character A
     SetScene(myKitchenTimerList,selected_time,targetTimer);   
-  } else ledModule->setDisplayToString("A -h----",B00000100,0);
+  } else led7seg.setString(0,7,"A -h----",B00000100);
 }
 
 void SetScene(KitchenTimer myKitchenTimerList[],long selected_time, byte targetTimer) {
@@ -89,10 +101,10 @@ void SetScene(KitchenTimer myKitchenTimerList[],long selected_time, byte targetT
   
   for(int i=0;i<TIMER_COUNT;i++)
   {
-    setLedBitByTimerStatus(myKitchenTimerList[i],i*2+1);  
+    if(i!=targetTimer||  (BLINKSTATE(BLINKCYCLE_FOCUS)))setLedBitByTimerStatus(i,myKitchenTimerList[i]); 
+    else dev_led_rg_set(i,0);
   }
-  bitWrite(output_ledPattern,startSegment+1,BLINKSTATE(BLINKCYCLE_FOCUS)); 
-  ledModule->setLEDs(output_ledPattern);
+  dev_led_rg_show();
 }
 
 
@@ -104,27 +116,27 @@ void SetScene(KitchenTimer myKitchenTimerList[],long selected_time, byte targetT
 void output_startupSequence()
 {
   output_clearAllSequence ();
-  for(int i=0;i<4;i++) {
-    ledModule->setLEDs((B00010000<<i) | (B00001000>>i));
+  for(int i=0;i<TIMER_COUNT+2;i++) {
+    if(i<TIMER_COUNT)dev_led_rg_set(i, LEDRG_GREEN);
+    if(i>0 && i<TIMER_COUNT+1) dev_led_rg_set(i-1,LEDRG_RED);
+    if(i>1) dev_led_rg_set(i-2,0);
+    dev_led_rg_show();
     delay(150);
   }
-  ledModule->setLEDs(0);
 }
 
 void output_clearAllSequence ()
 {
-  ledModule->clearDisplay();
-  ledModule->setLEDs(0);
-  #ifdef TRACE_OUTPUT_SEQUENCE
-    Serial.println(F("!ouput_clearAllSequence"));  
-  #endif
+  output_clearDisplay();
+  for(int i=0;i<TIMER_COUNT;i++) dev_led_rg_set(i,0);
+  dev_led_rg_show();
 }
 
 void output_startTimerSequence(KitchenTimer myKitchenTimerList[],byte ui_focussed_timer_index)
 {
 
-  ledModule->clearDisplay();
-  ledModule->setDisplayToString("Go",0,ui_focussed_timer_index*2); delay(1000);    
+  output_clearDisplay();
+  led7seg.setString(0,ui_focussed_timer_index*2+1,"Go",0); delay(1000);    
   
   // IMPROVE manage animation of all other timers
 }
@@ -132,19 +144,19 @@ void output_startTimerSequence(KitchenTimer myKitchenTimerList[],byte ui_focusse
 void output_holdSequence(KitchenTimer myKitchenTimerList[],byte ui_focussed_timer_index)
 {
 
-  ledModule->clearDisplay();
-  ledModule->setDisplayToString("PA",0,ui_focussed_timer_index*2); delay(1000);   
+  output_clearDisplay();
+  led7seg.setString(0,ui_focussed_timer_index*2+1,"PA",0); delay(1000);   
     // IMPROVE manage animation of all other timers 
 }
 
 
 void  output_blockedSequence(KitchenTimer myKitchenTimerList[],byte ui_focussed_timer_index)
 {
-  ledModule->clearDisplay();
+  output_clearDisplay();
   for(int i=0;i<5;i++)
   {
-  ledModule->setDisplayToString("? ",0,ui_focussed_timer_index*2); delay(100);   
-  ledModule->setDisplayToString(" ?",0,ui_focussed_timer_index*2); delay(100); 
+  led7seg.setString(0,ui_focussed_timer_index*2+1,"5 ",0); delay(100);   
+  led7seg.setString(0,ui_focussed_timer_index*2+1," 5",0); delay(100); 
   }
   // IMPROVE manage animation of all other timers 
 }
@@ -153,8 +165,8 @@ void  output_blockedSequence(KitchenTimer myKitchenTimerList[],byte ui_focussed_
 void output_resetSequence(KitchenTimer myKitchenTimerList[],byte ui_focussed_timer_index)
 {
 
-  ledModule->clearDisplay();
-  ledModule->setDisplayToString("OF",0,ui_focussed_timer_index*2); delay(1000);   
+  output_clearDisplay();
+  led7seg.setString(0,ui_focussed_timer_index*2+1,"OF",0); delay(1000);   
     // IMPROVE manage animation of all other timers 
 }
 
@@ -174,7 +186,7 @@ void determineBlinkCycles()
 }
 
 
-void renderTimerCompact(KitchenTimer myKitchenTimer, byte startSegment) {
+void renderTimerCompact(KitchenTimer myKitchenTimer, byte timerSlot) {
 
 
    long currentTime=abs(myKitchenTimer.getTimeLeft());
@@ -183,16 +195,14 @@ void renderTimerCompact(KitchenTimer myKitchenTimer, byte startSegment) {
    /* Disabled  static */
    if(myKitchenTimer.isDisabled())  // Inactive channels just show a dot
    {
-      ledModule->clearDisplayDigit(startSegment,true);
-      ledModule->clearDisplayDigit(startSegment+1,false);
+      led7seg.setString(0,timerSlot*2+1,"  ",0);
       return;   
    } 
 
    /* on hold blinking */
    if(!myKitchenTimer.isOver() && myKitchenTimer.isOnHold() &&!BLINKSTATE(BLINKCYCLE_HOLD))
    {
-      ledModule->clearDisplayDigit(startSegment,false);
-      ledModule->clearDisplayDigit(startSegment+1,false);
+      led7seg.setString(0,timerSlot*2+1,"  ",0);
       return;   
    }
 
@@ -201,119 +211,134 @@ void renderTimerCompact(KitchenTimer myKitchenTimer, byte startSegment) {
      if(myKitchenTimer.hasAlert())
      {  if  ( BLINKSTATE(BLINKCYCLE_ALERT))
         {
-          ledModule->setDisplayToString("*_",0,startSegment);    
+          led7seg.setString(0,timerSlot*2+1,"*_",0);    
           return;      
         } else {
-          ledModule->setDisplayToString("_*",0,startSegment); 
+          led7seg.setString(0,timerSlot*2+1,"_*",0); 
           return;
         }
      } else {
       if ( myKitchenTimer.getTimeLeft()<TIMER_CALM_DOWN_TIME || BLINKSTATE(BLINKCYCLE_OVER) ) 
       {
-        ledModule->setDisplayToString("__",B10000000,startSegment);   
+        led7seg.setString(0,timerSlot*2+1,"__",B10000000);   
         return;        
       }
      }
    }
    /* when here, we are allowed to show the time */
-   renderTimeCompact(abs(myKitchenTimer.getTimeLeft()),setDot,startSegment);
+   renderTimeCompact(timerSlot,abs(myKitchenTimer.getTimeLeft()),setDot);
 }
 
-void renderTimeCompact(long currentTime,bool dotState, byte startSegment)
+void renderTimeCompact(byte timerSlot,long currentTime,bool dotState)
 {
-   char s[8];
- 
+   char s[8];  // s is the stringbuffer for easy formatted rendering
+   byte startSegment=(timerSlot*2+1);
+   
    if(currentTime>=86400)  // day display mode
    { 
       sprintf(s, "%dd", currentTime/86400);
-      ledModule->setDisplayToString(s,dotState?B01000000:0,startSegment);    
+      led7seg.setString(0,startSegment,s,dotState?B01000000:0);    
       return;  
    }
    
    if(currentTime>=36000)  // 10 Hour display mode
    { 
       sprintf(s, "H%d", currentTime/36000);
-      ledModule->setDisplayToString(s,dotState?B01000000:0,startSegment);    
+      led7seg.setString(0,startSegment,s,dotState?B01000000:0);    
       return;  
    }
    
    if(currentTime>=3600)  // Hour display mode
    { 
       sprintf(s, "%dh", currentTime/3600);
-      ledModule->setDisplayToString(s,dotState?B01000000:0,startSegment);    
+      led7seg.setString(0,startSegment,s,dotState?B01000000:0);     
       return;  
    }
    
    if(currentTime>=600)  // Minute display mode
    { 
-      ledModule->setDisplayDigit(currentTime/600,startSegment,false);
-      ledModule->setDisplayDigit((currentTime/60)%10,startSegment+1,dotState);
+      led7seg.setDigit(0,startSegment,currentTime/600,false);
+      led7seg.setDigit(0,startSegment-1,(currentTime/60)%10,dotState);
       return;  
    }
 
    if(currentTime>59) {  //Minute + 10 second display mode
-    ledModule->setDisplayDigit(currentTime/60,startSegment, dotState);
-    ledModule->setDisplayDigit((currentTime%60)/10,startSegment+1,false);
+    led7seg.setDigit(0,startSegment,currentTime/60, dotState);
+    led7seg.setDigit(0,startSegment-1,(currentTime%60)/10,false);
     return;
    }
    
    // last seconds
    sprintf(s, "%2d", abs(currentTime));
-   ledModule->setDisplayToString(s,0,startSegment);
+   led7seg.setString(0,startSegment,s,0);
 }
-
 
 
 void renderTimeLong(long currentTime)
 {
    char s[9];
    currentTime=abs(currentTime);
-   if(currentTime<86400)  {// below 24 Hour display mode hh"H"mm.ss
+   if(currentTime<86400)  {// below 24 Hour display mode hh"h"mm.ss
       sprintf(s, "%2ldh%02ld%02ld", (currentTime/3600)%24,(currentTime/60)%60,currentTime%60);
-      ledModule->setDisplayToString(s,B00001000,1);    
+      led7seg.setString(0,6,s,B00001000);    
         return;  
    }
 
+   // more then 24 Hour display mode d"d"hh"h"mm
    sprintf(s, "%ldd%2ldh%02ld", (currentTime/86400)%24,(currentTime/3600)%24,(currentTime/60)%60);
-   ledModule->setDisplayToString(s,B00000010,1);    
+   led7seg.setString(0,6,s,B00000010);    
    return;  
 
 }
 
+void clearTimeCompact(byte timerSlot)
+{
+  led7seg.setChar(0,timerSlot*2+1,32,false); //Space char
+  led7seg.setChar(0,timerSlot*2,32,false); //Space char
+}
 
 /* Prepere the bits for the led bar accordingly */
-void setLedBitByTimerStatus(KitchenTimer theKitchenTimer, byte ledIndex) {
+void setLedBitByTimerStatus(byte timerIndex,KitchenTimer theKitchenTimer ) {
 
-   if(theKitchenTimer.isDisabled()    
-      ||(theKitchenTimer.isOnHold() &&!BLINKSTATE(BLINKCYCLE_HOLD))
-      )
+   if(theKitchenTimer.isDisabled()   )
    {
-       bitClear(output_ledPattern,ledIndex);
-      return;   
+          dev_led_rg_set(timerIndex, LEDRG_GREEN);
+          return;    
    }
 
-   if( theKitchenTimer.isOver()) 
+    // Probably running so set to red
+
+   if(theKitchenTimer.isOnHold() &&!BLINKSTATE(BLINKCYCLE_HOLD)) // On Hold blink
    {
-     if( !theKitchenTimer.hasAlert())
-     {
-      bitClear(output_ledPattern,ledIndex);
-      return;
-     }
-     if(BLINKSTATE(BLINKCYCLE_ALERT)) {
-         bitClear(output_ledPattern,ledIndex);   
-        return;      
-     }
-   }   
-   /* since no rule switches of the led we will light it up */
-   bitSet(output_ledPattern,ledIndex);
+       dev_led_rg_set(timerIndex, 0);
+       return;
+   }
+
+   if(theKitchenTimer.hasAlert()) // Alert Blink
+   {
+    if(BLINKSTATE(BLINKCYCLE_ALERT)) dev_led_rg_set(timerIndex, 0);
+    else  dev_led_rg_set(timerIndex, LEDRG_RED);
+    return;
+   }
+    
+   if(theKitchenTimer.isOver()) 
+   {
+       dev_led_rg_set(timerIndex, 0);
+       return;
+   }
+
+   dev_led_rg_set(timerIndex, LEDRG_RED); // No rule interfered so we are running
 }
 
 /*  ************************  setup  ************************************
  *  *********************************************************************
  */
 
-void output_setup(TM1638 *ledKeyModToUse) {
-  ledModule=ledKeyModToUse;
-  ledModule->setupDisplay(DISPLAY_ACTIVE, DISPLAY_INTENSITY);
+
+void output_setup() {
+  led7seg.shutdown(0,false); // wake up 7seg display
+  led7seg.setIntensity(0,8);
+  led7seg.clearDisplay(0);
+  dev_led_rg_setup();
   output_startupSequence();
 }

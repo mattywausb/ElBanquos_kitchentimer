@@ -113,7 +113,7 @@ bool KitchenTimer::isOver()
   return (tracked_interval!=0 && getTimeLeft()<=0);
 }
 
-/* check if timer is over */
+/* check if timer is disabled */
 bool KitchenTimer::isDisabled()
 {
   return (tracked_interval==0);

@@ -1,10 +1,9 @@
-#include <TM1638.h>
+
 #include "mainSettings.h"
 #include "kitchenTimer.h"   // Class declaration
 
 #ifdef TRACE_ON
 #define TRACE_CLOCK 
-#define DEBUG_SETTING_1 
 //#define DEBUG_SCALE_TABLE 
 #endif
 
@@ -32,8 +31,6 @@ UI_MODES ui_mode = IDLE_MODE;
 
 
 byte ui_focussed_timer_index=MOCKUP_TIMER;  // until we have multi timer support we test everything with the mockup
-
-TM1638 ledAndKeymodule(4, 3, 2);  // the led+keys module is input and output, so core must own it
 
 KitchenTimer myKitchenTimerList[TIMER_COUNT];
 
@@ -439,8 +436,8 @@ void setup() {
   #endif
   
   sound_setup();
-  output_setup(&ledAndKeymodule);
-  input_setup(&ledAndKeymodule); 
+  output_setup();
+  input_setup(); 
 
   input_setEncoderRange(0,1,1,false);
 
