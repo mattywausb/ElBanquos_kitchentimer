@@ -16,7 +16,7 @@
 #define PRESS_DURATION_FOR_RESET 2500  // milliseconds you must hold select to disable a timer
 #define PRESS_DURATION_SHORT 500  // milliseconds while a press counts as short 
 
-const long timer_interval_preset[]={180,330,1200,3600}; // 3 min, 5.5 min, 20 min, 1 h
+const long timer_interval_preset[]={1800,1200,330,180}; // 30 min, 20 min, 5'30 min, 3 min (Reverse order to position)
 
 #define MOCKUP_TIMER 0
 
