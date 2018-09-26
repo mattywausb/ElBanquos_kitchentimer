@@ -58,7 +58,7 @@ void output_renderIdleScene(KitchenTimer  myKitchenTimerList[]) {
   for(int i=0;i<TIMER_COUNT;i++)
   {
     renderTimerCompact(myKitchenTimerList[i],i);
-    setLedBitByTimerStatus(i,myKitchenTimerList[i]);  
+    setLedByTimerStatus(i,myKitchenTimerList[i]);  
   }
   dev_led_rg_show();
 }
@@ -70,15 +70,31 @@ void output_renderPreselectScene(KitchenTimer myKitchenTimerList[],long selected
   renderTimeLong(selected_time);
   for(int i=0;i<TIMER_COUNT;i++)
   {
-    setLedBitByTimerStatus(i,myKitchenTimerList[i]);  
+    setLedByTimerStatus(i,myKitchenTimerList[i]);  
   } 
   dev_led_rg_show();
 }
 
+
 /* ************ Set scene *************************** */
 
 void output_renderSetScene(KitchenTimer myKitchenTimerList[],long selected_time, byte targetTimer) {
-  SetScene(myKitchenTimerList,selected_time,targetTimer);  
+  determineBlinkCycles(); 
+  renderTimeLong(selected_time);
+  
+  for(int i=0;i<TIMER_COUNT;i++)
+  {
+    if(i!=targetTimer) setLedByTimerStatus(i,myKitchenTimerList[i]);
+    else {
+      if((BLINKSTATE(BLINKCYCLE_FOCUS))) 
+      {
+        if(myKitchenTimerList[i].isOver()) dev_led_rg_set(i,LEDRG_GREEN);
+        else setLedByTimerStatus(i,myKitchenTimerList[i]);
+      }
+      else dev_led_rg_set(i,0);
+    }
+  }
+  dev_led_rg_show();
 }
 
 void output_renderSetScene_withLastTime (KitchenTimer myKitchenTimerList[],long selected_time, byte targetTimer) 
@@ -89,23 +105,11 @@ void output_renderSetScene_withLastTime (KitchenTimer myKitchenTimerList[],long 
   if(selected_time!=0) 
   {
     led7seg.setChar(0,7,65,false); // Character A
-    SetScene(myKitchenTimerList,selected_time,targetTimer);   
+    output_renderSetScene(myKitchenTimerList,selected_time,targetTimer);   
   } else led7seg.setString(0,7,"A -h----",B00000100);
 }
 
-void SetScene(KitchenTimer myKitchenTimerList[],long selected_time, byte targetTimer) {
-  byte startSegment=targetTimer*2;
-  
-  determineBlinkCycles(); 
-  renderTimeLong(selected_time);
-  
-  for(int i=0;i<TIMER_COUNT;i++)
-  {
-    if(i!=targetTimer||  (BLINKSTATE(BLINKCYCLE_FOCUS)))setLedBitByTimerStatus(i,myKitchenTimerList[i]); 
-    else dev_led_rg_set(i,0);
-  }
-  dev_led_rg_show();
-}
+
 
 
 /*  ************************  Sequences *********************************
@@ -137,7 +141,7 @@ void output_startTimerSequence(KitchenTimer myKitchenTimerList[],byte ui_focusse
 
   output_clearDisplay();
   led7seg.setString(0,ui_focussed_timer_index*2+1,"Go",0);
-  setLedBitByTimerStatus(ui_focussed_timer_index,myKitchenTimerList[ui_focussed_timer_index]);  
+  setLedByTimerStatus(ui_focussed_timer_index,myKitchenTimerList[ui_focussed_timer_index]);  
   dev_led_rg_show(); 
   delay(1000);    
   
@@ -157,9 +161,13 @@ void  output_blockedSequence(KitchenTimer myKitchenTimerList[],byte ui_focussed_
 {
   output_clearDisplay();
   for(int i=0;i<5;i++)
-  {
-  led7seg.setString(0,ui_focussed_timer_index*2+1,"5 ",0); delay(100);   
-  led7seg.setString(0,ui_focussed_timer_index*2+1," 5",0); delay(100); 
+  { //26
+  led7seg.setChar(0,ui_focussed_timer_index*2,32,false);
+  led7seg.setChar(0,ui_focussed_timer_index*2+1,26,false);
+  delay(100); 
+  led7seg.setChar(0,ui_focussed_timer_index*2,26,false);
+  led7seg.setChar(0,ui_focussed_timer_index*2+1,32,false);
+  delay(100); 
   }
   // IMPROVE manage animation of all other timers 
 }
@@ -170,7 +178,7 @@ void output_resetSequence(KitchenTimer myKitchenTimerList[],byte ui_focussed_tim
 
   output_clearDisplay();
   led7seg.setString(0,ui_focussed_timer_index*2+1,"OF",0); 
-  setLedBitByTimerStatus(ui_focussed_timer_index,myKitchenTimerList[ui_focussed_timer_index]);  
+  setLedByTimerStatus(ui_focussed_timer_index,myKitchenTimerList[ui_focussed_timer_index]);  
   dev_led_rg_show(); 
   delay(1000);   
   // IMPROVE manage animation of all other timers 
@@ -304,7 +312,7 @@ void clearTimeCompact(byte timerSlot)
 }
 
 /* Prepere the bits for the led bar accordingly */
-void setLedBitByTimerStatus(byte timerIndex,KitchenTimer theKitchenTimer ) {
+void setLedByTimerStatus(byte timerIndex,KitchenTimer theKitchenTimer ) {
 
    if(theKitchenTimer.isDisabled()   )
    {

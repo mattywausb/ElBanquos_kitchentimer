@@ -34,6 +34,8 @@ UI_MODES ui_mode = IDLE_MODE;
 
 byte ui_focussed_timer_index=MOCKUP_TIMER;  // until we have multi timer support we test everything with the mockup
 
+bool ui_button_press_from_previous_mode=false;
+
 KitchenTimer myKitchenTimerList[TIMER_COUNT];
 
 /* *************** IDLE_MODE ***************** 
@@ -55,7 +57,7 @@ void process_IDLE_MODE()
   for(ui_focussed_timer_index=0;ui_focussed_timer_index<TIMER_COUNT;ui_focussed_timer_index++)
   {  
     focussed_timer=&myKitchenTimerList[ui_focussed_timer_index];
-    if(input_timerButtonGotReleased(ui_focussed_timer_index)&&input_getLastPressDuration()<PRESS_DURATION_SHORT )
+    if(input_timerButtonGotPressed(ui_focussed_timer_index) )
     {
       if(focussed_timer->hasAlert()){
         focussed_timer->acknowledgeAlert(); 
@@ -166,8 +168,8 @@ void enter_DISPLAY_MODE(){
   input_setEncoderValue(0);  
     
   ui_mode=DISPLAY_MODE;
+  ui_button_press_from_previous_mode=true;
   output_clearAllSequence ();
-  input_pauseUntilRelease();
   
   output_renderSetScene(myKitchenTimerList,myKitchenTimerList[ui_focussed_timer_index].getTimeLeft(),ui_focussed_timer_index);
 }
@@ -193,6 +195,13 @@ void process_DISPLAY_MODE() {
        output_resetSequence(myKitchenTimerList,ui_focussed_timer_index);
        enter_IDLE_MODE();
        return;       
+   }
+
+   /* old button press */
+   if( ui_button_press_from_previous_mode && !input_timerButtonIsPressed(ui_focussed_timer_index))
+   {
+    ui_button_press_from_previous_mode=false;
+    return;
    }
    
    /* Button of the timer short */
