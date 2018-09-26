@@ -109,6 +109,7 @@ void output_setup() {
   led7seg.shutdown(0,false); // wake up 7seg display
   led7seg.setIntensity(0,8);
   led7seg.clearDisplay(0);
+  dev_led_rg_setup();
 }
 
 
