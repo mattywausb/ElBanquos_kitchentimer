@@ -15,6 +15,8 @@
 #define UI_FALLBACK_INTERVAL 10   // seconds, ui will fall back to idle wihtout interaction
 #define PRESS_DURATION_FOR_RESET 2500  // milliseconds you must hold select to disable a timer
 #define PRESS_DURATION_SHORT 500  // milliseconds while a press counts as short 
+#define ALERT_DURATION 45 // Seconds the alert will go without manual ackknowledgement
+#define MAX_OVER_TIME 3600 // Seconds the over time mode will be kept befor complet disabling the timer
 
 const long timer_interval_preset[]={1800,1200,330,180}; // 30 min, 20 min, 5'30 min, 3 min (order is right to left)
 
@@ -76,8 +78,17 @@ void process_IDLE_MODE()
   for(int i=0;i<TIMER_COUNT;i++)
   {
     if(myKitchenTimerList[i].hasAlert()
-       && (myKitchenTimerList[i].getTimeLeft()< -15) ) // TODO: Make this longer, when not in IDLE
+       && (myKitchenTimerList[i].getTimeLeft()< -ALERT_DURATION) ) // TODO: Make this longer, when not in IDLE
            myKitchenTimerList[i].acknowledgeAlert();
+  }
+
+  /* Automated disabling after twice of runtime */
+  for(int i=0;i<TIMER_COUNT;i++)
+  {
+    if(myKitchenTimerList[i].isOver()
+      && ((-myKitchenTimerList[i].getTimeLeft())>ALERT_DURATION+myKitchenTimerList[i].getLastSetTime() 
+          || (-myKitchenTimerList[i].getTimeLeft())>MAX_OVER_TIME) )
+          myKitchenTimerList[i].disable();
   }
 
   output_renderIdleScene(myKitchenTimerList);

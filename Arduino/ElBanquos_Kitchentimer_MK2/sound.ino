@@ -147,13 +147,17 @@ void sound_stopAlarmForTimer(byte timer_index)
 {
   bitClear(sound_active_flags,timer_index);
   if(sound_active_flags==0) // this was the last alarm running
-      noTone(SOUND_OUT_PIN);
+  {
+    noTone(SOUND_OUT_PIN);
+    digitalWrite(TRACE_MONITOR_LED_PIN,LOW);
+  }
 }
 
 void sound_stopAll(byte timer_index)
 {
   sound_active_flags=0;
   noTone(SOUND_OUT_PIN);
+  digitalWrite(TRACE_MONITOR_LED_PIN,LOW);
 }
 
 /* *************************** TICK *************************************
@@ -172,16 +176,12 @@ void sound_tick()
     {
       if(sound_pattern[sound_current_frame]>0)
           tone(SOUND_OUT_PIN, notes[sound_pattern[sound_current_frame]-1], NOTE_DURATION);
-      #ifdef TRACE_SOUND
           digitalWrite(TRACE_MONITOR_LED_PIN,HIGH);
-      #endif
     } 
-    #ifdef TRACE_SOUND
     else {
           noTone(SOUND_OUT_PIN);
           digitalWrite(TRACE_MONITOR_LED_PIN,LOW);
     }
-    #endif
     if(++sound_current_frame>=SOUND_PATTERN_COUNT) sound_current_frame=0;
   }
 }
