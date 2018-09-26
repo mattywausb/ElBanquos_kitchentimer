@@ -136,7 +136,10 @@ void output_startTimerSequence(KitchenTimer myKitchenTimerList[],byte ui_focusse
 {
 
   output_clearDisplay();
-  led7seg.setString(0,ui_focussed_timer_index*2+1,"Go",0); delay(1000);    
+  led7seg.setString(0,ui_focussed_timer_index*2+1,"Go",0);
+  setLedBitByTimerStatus(ui_focussed_timer_index,myKitchenTimerList[ui_focussed_timer_index]);  
+  dev_led_rg_show(); 
+  delay(1000);    
   
   // IMPROVE manage animation of all other timers
 }
@@ -166,8 +169,11 @@ void output_resetSequence(KitchenTimer myKitchenTimerList[],byte ui_focussed_tim
 {
 
   output_clearDisplay();
-  led7seg.setString(0,ui_focussed_timer_index*2+1,"OF",0); delay(1000);   
-    // IMPROVE manage animation of all other timers 
+  led7seg.setString(0,ui_focussed_timer_index*2+1,"OF",0); 
+  setLedBitByTimerStatus(ui_focussed_timer_index,myKitchenTimerList[ui_focussed_timer_index]);  
+  dev_led_rg_show(); 
+  delay(1000);   
+  // IMPROVE manage animation of all other timers 
 }
 
 /*  ************************  Helpers  **********************************
