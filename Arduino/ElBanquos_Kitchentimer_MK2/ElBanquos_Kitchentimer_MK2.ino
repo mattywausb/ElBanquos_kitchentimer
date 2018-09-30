@@ -277,9 +277,9 @@ void process_DISPLAY_MODE() {
     {
       enter_SET_MODE(focussed_timer->getTimeLeft());    
       return ;             
-    } else {  // there is no timer value we can start from 
-      if(input_getEncoderValue()>0) enter_SET_MODE(DEFAULT_INTERVAL_UP);
-      else                          enter_SET_MODE(DEFAULT_INTERVAL_DN);  // There might be a use of different values depending on the turning direction
+    } else {  // there is no timer value we can start from o lets take the preset
+      if(input_getEncoderValue()>0) enter_SET_MODE(timer_interval_preset[ui_focussed_timer_index]);
+      else                          enter_SET_MODE(timer_interval_preset[ui_focussed_timer_index]);  // There might be a use of different values depending on the turning direction
       return;
     }
   }
