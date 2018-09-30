@@ -7,22 +7,20 @@
 #ifdef TRACE_ON
 #define TRACE_INPUT 
 //#define TRACE_INPUT_HIGH 
-//#define TRACE_INPUT_ACCELERATION
+#define TRACE_INPUT_ACCELERATION
 #endif
 
 /* Encoder constants and variables for IDS tracking function */
 
 #define ENCODER_PIN_A 2
 #define ENCODER_PIN_B 3
-#define ENCODER_2x_TURN_INTERVAL 150
-#define ENCODER_4x_TURN_INTERVAL 70
+#define ENCODER_2x_TURN_INTERVAL 80
+#define ENCODER_4x_TURN_INTERVAL 40
 
 #define ENCODER_COOLDOWN_TIME 5 // millies to wait until we process another encoder change
 
-volatile unsigned int encoder_a_prev_change_time=0;
-volatile unsigned int encoder_b_prev_change_time=0;
-volatile unsigned int encoder_a_close_time=0;
-volatile unsigned int encoder_b_close_time=0;
+volatile unsigned long encoder_a_prev_change_time=0;
+volatile unsigned long encoder_b_prev_change_time=0;
 volatile bool encoder_a_closed=false;
 volatile bool encoder_b_closed=false;
 
@@ -44,6 +42,8 @@ int input_encoder_rangeMax = 719;
 int input_encoder_stepSize = 1;
 bool input_encoder_wrap = true;
 bool input_encoder_change_event = false;
+
+volatile byte input_encoder_acceleration=1;
 
 
 
@@ -68,10 +68,7 @@ unsigned long buttons_last_read_time=0;  // Millis of last butto ncheck
 unsigned int button_raw_state=0;         // state of buttons in last button check
 unsigned int button_tick_state = 0;      // current and historized state in the actual tick
 
-#ifdef TRACE_INPUT_ACCELERATION
-volatile byte traceValue_acceleration=0;
-volatile int traceValue_turn_interval=0;
-#endif
+
 
 /* Generic button bit pattern (Button 0) */
 
@@ -229,13 +226,16 @@ void encoder_pin_a_change_ISR()
   byte isClosed=!digitalRead(ENCODER_PIN_A);
   unsigned long turn_event_interval=millis()-encoder_a_prev_change_time;
   
-  if(turn_event_interval<ENCODER_COOLDOWN_TIME) return; // we are inside debounce cooldown so get out here
+  if(millis()-encoder_a_prev_change_time<ENCODER_COOLDOWN_TIME) return; // we are inside debounce cooldown so get out here
   encoder_a_prev_change_time=millis();
   encoder_a_closed=isClosed;
   
   switch(encoder_state) {
     case FULL_OPEN:   
-                      if(encoder_a_closed) encoder_state=FIRST_A_CLOSE; // This initiating a turn
+                      if(encoder_a_closed) 
+                      {
+                        encoder_state=FIRST_A_CLOSE; // This initiating a turn
+                      }
                       break;
     case FIRST_A_CLOSE:
                       if(!encoder_b_closed&&!encoder_a_closed)  encoder_state=FULL_OPEN;  // Turned Back
@@ -244,30 +244,16 @@ void encoder_pin_a_change_ISR()
                       if(!encoder_b_closed && !encoder_a_closed)      // finally turn is complete
                       {
                         encoder_state=FULL_OPEN;
-                        encoder_movement+=1; 
-                        if(turn_event_interval<ENCODER_2x_TURN_INTERVAL)
-                        {
-                          encoder_movement+=1;
-                          #ifdef TRACE_INPUT_ACCELERATION 
-                            traceValue_turn_interval=turn_event_interval;
-                            traceValue_acceleration=2;
-                          #endif
-                          if(turn_event_interval<ENCODER_4x_TURN_INTERVAL)
-                          {
-                            encoder_movement+=2;                 
-                            #ifdef TRACE_INPUT_ACCELERATION 
-                              traceValue_acceleration=4;
-                            #endif
-                          }
-                        }                        
+                        encoder_movement+=1;                      
                       }
+                      break;
   }
 }
 
 
 void encoder_pin_b_change_ISR()
 {
-  byte isClosed=!digitalRead(ENCODER_PIN_A);
+  byte isClosed=!digitalRead(ENCODER_PIN_B);
   unsigned long turn_event_interval=millis()-encoder_b_prev_change_time;
   
   if(turn_event_interval<ENCODER_COOLDOWN_TIME) return; // we are inside debounce cooldown so get out here
@@ -276,7 +262,10 @@ void encoder_pin_b_change_ISR()
   
   switch(encoder_state) {
     case FULL_OPEN:   
-                      if(encoder_b_closed) encoder_state=FIRST_B_CLOSE; // This initiating a turn
+                      if(encoder_b_closed) 
+                      {
+                        encoder_state=FIRST_B_CLOSE; // This initiating a turn
+                      }
                       break;
     case FIRST_B_CLOSE:
                       if(!encoder_b_closed&&!encoder_a_closed)  encoder_state=FULL_OPEN;  // Turned Back
@@ -286,22 +275,8 @@ void encoder_pin_b_change_ISR()
                       {
                         encoder_state=FULL_OPEN;
                         encoder_movement-=1; 
-                        if(turn_event_interval<ENCODER_2x_TURN_INTERVAL)
-                        {
-                          encoder_movement-=1;
-                          #ifdef TRACE_INPUT_ACCELERATION 
-                            traceValue_turn_interval=turn_event_interval;
-                            traceValue_acceleration=2;
-                          #endif
-                          if(turn_event_interval<ENCODER_4x_TURN_INTERVAL)
-                          {
-                            encoder_movement-=2;                 
-                            #ifdef TRACE_INPUT_ACCELERATION 
-                              traceValue_acceleration=4;
-                            #endif
-                          }
-                        }                        
                       }
+                      break;
   }
 }
 
@@ -315,16 +290,8 @@ void encoder_pin_b_change_ISR()
 
 void input_switches_scan_tick()
 {
+  bool change_happened=false;
 
-  #ifdef TRACE_INPUT_ACCELERATION 
-   if( traceValue_acceleration) 
-   {
-    Serial.print(F("TRACE_INPUT_ACCELERATION "));
-    Serial.print(traceValue_turn_interval);Serial.print(F("("));
-    Serial.print(traceValue_acceleration);Serial.print(F(") "));
-    traceValue_acceleration=0;    
-   }
-  #endif
 
 
   
@@ -355,12 +322,13 @@ void input_switches_scan_tick()
   button_tick_state = (button_tick_state & INPUT_CURRENT_BITS) << 1
                | (button_raw_state & INPUT_CURRENT_BITS);
 
-
+  
   /* Track pressing time */
   for (int i =0;i<INPUT_PORT_COUNT;i++)
   {
     if((button_tick_state & (INPUT_0_BITS<<(i*2))) == INPUT_0_SWITCHED_ON_PATTERN<<(i*2)) 
     {
+      change_happened=true;
       last_press_end_time =last_press_start_time=millis();
       #ifdef TRACE_INPUT_HIGH
         Serial.print(("TRACE_INPUT_HIGH:press detected of "));Serial.println(i);
@@ -369,6 +337,7 @@ void input_switches_scan_tick()
     if((button_tick_state & (INPUT_0_BITS<<(i*2))) == INPUT_0_SWITCHED_OFF_PATTERN<<(i*2)) 
     {
       last_press_end_time=millis();
+      change_happened=true;
       #ifdef TRACE_INPUT_HIGH
         Serial.println(("TRACE_INPUT_HIGH:release detected"));Serial.println(i);
       #endif     
@@ -380,7 +349,17 @@ void input_switches_scan_tick()
   if (tick_encoder_movement) {
     if(input_enabled && !input_selectIsPressed())
     {
-      input_encoder_value += tick_encoder_movement * input_encoder_stepSize;
+      unsigned long change_interval=millis()-input_last_change_time;
+      if(change_interval<ENCODER_4x_TURN_INTERVAL) input_encoder_acceleration=4;
+      else if(change_interval<ENCODER_2x_TURN_INTERVAL) input_encoder_acceleration=2;
+      else input_encoder_acceleration=1;
+      #ifdef TRACE_INPUT_ACCELERATION 
+        Serial.print(F("TRACE_INPUT_ACCELERATION "));
+        Serial.print(change_interval);Serial.print(F("("));
+        Serial.print(input_encoder_acceleration);Serial.print(F(") "));  
+      #endif     
+      change_happened=true;
+      input_encoder_value += tick_encoder_movement * input_encoder_stepSize*input_encoder_acceleration;
       input_encoder_change_event = true;
     }
     encoder_movement -= tick_encoder_movement; // remove the transfered value from the tracking
@@ -391,6 +370,9 @@ void input_switches_scan_tick()
   else if (input_encoder_value < input_encoder_rangeMin) input_encoder_value = input_encoder_wrap ? input_encoder_rangeMax : input_encoder_rangeMin;
 
   if(button_tick_state & INPUT_ALL_BUTTON_STATE_MASK ==0x00)  input_enabled=true; // enable input when all is released and settled
+
+  if(change_happened)input_last_change_time = millis(); // Reset the globel age of interaction
+
 
 } // void input_switches_tick()
 
