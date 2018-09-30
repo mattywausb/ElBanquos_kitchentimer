@@ -15,9 +15,9 @@
 
 #define PORT_MAIN_SWITCH 8
 
-const byte switch_pin_list[] = {11,  // ENCODER A
-                                12,    // ENCODER B
-                                10,    // BUTTON A SELECT ( ENCODER PUSH)
+const byte switch_pin_list[] = {2,  // ENCODER A
+                                3,    // ENCODER B
+                                4,    // BUTTON A SELECT ( ENCODER PUSH)
                                 2,     // Timer 1
                                 3,     // Timer 2
                                 4,     // Timer 3
