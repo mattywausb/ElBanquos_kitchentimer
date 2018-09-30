@@ -15,8 +15,11 @@
   http://www.arduino.cc/en/Tutorial/Tone
 */
 
+#include "mainSettings.h"
+
+
 #define PIEZO_PIN 5
-#define TRIGGER_BUTTON_BIN 8
+#define TRIGGER_BUTTON_PIN 10
 
 #include "pitches.h"
 
@@ -39,15 +42,27 @@ int noteDurations[] = {
 
 #define DURATION_FULL_NOTE 1000
 
+
+
 void setup() {
-   pinMode(TRIGGER_BUTTON_BIN, INPUT_PULLUP);
+   #ifdef TRACE_ON 
+    char compile_signature[] = "--- START (Build: " __DATE__ " " __TIME__ ") ---";   
+    Serial.begin(9600);
+    Serial.println(compile_signature); 
+  #endif
+   pinMode(TRIGGER_BUTTON_PIN, INPUT_PULLUP);
+
+ input_setup();
+   
 }
 
 void loop() {
-
- if(!digitalRead(TRIGGER_BUTTON_BIN))
+ //input_switches_scan_tick();
+ if(input_selectGotPressed() || digitalRead(TRIGGER_BUTTON_PIN)==LOW)
  {
-  
+   #ifdef TRACE_ON 
+    Serial.println("--- Playing ---"); 
+  #endif
     // iterate over the notes of the melody:
     for (int thisNote = 0; thisNote < NOTE_COUNT; thisNote++) {
       for(int thisDuration = 0; thisDuration<DURATION_COUNT;thisDuration++) {  
@@ -64,7 +79,10 @@ void loop() {
         noTone(5);
       }
     }
+
+  #ifdef TRACE_ON 
+    Serial.println("--- Melody Complete ---"); 
+  #endif
+
  }
-
-
 }
