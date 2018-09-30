@@ -19,7 +19,7 @@
 
 
 #define PIEZO_PIN 5
-#define TRIGGER_BUTTON_PIN 10
+#define TRIGGER_BUTTON_PIN 4
 
 #include "pitches.h"
 
@@ -57,8 +57,8 @@ void setup() {
 }
 
 void loop() {
- //input_switches_scan_tick();
- if(input_selectGotPressed() || digitalRead(TRIGGER_BUTTON_PIN)==LOW)
+ input_switches_scan_tick();
+ if(input_timerButtonGotPressed(0))
  {
    #ifdef TRACE_ON 
     Serial.println("--- Playing ---"); 
