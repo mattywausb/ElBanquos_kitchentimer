@@ -22,6 +22,7 @@ LedControl led7seg=LedControl(LED7SEG_DATA_PIN,LED7SEG_CLK_PIN,LED7SEG_LOAD_PIN,
 #define BLINKCYCLE_OVER 3
 #define BLINKCYCLE_HOLD 4
 #define BLINKCYCLE_RUNNING 5
+#define BLINKCYCLE_ALERT_FLIP 6
 
 #define TIMER_CALM_DOWN_TIME -120
 
@@ -193,7 +194,8 @@ void determineBlinkCycles()
 {
    byte frame=(millis()/63)%32;  /* Create 16fps framenumber, 1 bit in pattern = 1/16 second, 8 bit= 1/2 second */
    bitWrite(output_blinkCycleFlags,BLINKCYCLE_FOCUS,(0x33333333>>frame)&0x0001);
-   bitWrite(output_blinkCycleFlags,BLINKCYCLE_ALERT,(0xF555f555>>frame)&0x0001); 
+   bitWrite(output_blinkCycleFlags,BLINKCYCLE_ALERT,(0x55555555>>frame)&0x0001); 
+   bitWrite(output_blinkCycleFlags,BLINKCYCLE_ALERT_FLIP,(0xFF00FF00>>frame)&0x0001); 
    bitWrite(output_blinkCycleFlags,BLINKCYCLE_OVER, (0xfff00000>>frame)&0x0001);
    bitWrite(output_blinkCycleFlags,BLINKCYCLE_HOLD, (0xfffffcfc>>frame)&0x0001);
    bitWrite(output_blinkCycleFlags,BLINKCYCLE_RUNNING, (0xfffffffe>>frame)&0x0001);
@@ -221,23 +223,27 @@ void renderTimerCompact(KitchenTimer myKitchenTimer, byte timerSlot) {
    }
 
    /* Alert and Over */
-   if( myKitchenTimer.isOver()) {
-     if(myKitchenTimer.hasAlert())
-     {  if  ( BLINKSTATE(BLINKCYCLE_ALERT))
-        {
-          led7seg.setString(0,timerSlot*2+1,"*_",0);    
-          return;      
-        } else {
-          led7seg.setString(0,timerSlot*2+1,"_*",0); 
-          return;
-        }
-     } else {
+   if( myKitchenTimer.isOver()) 
+   {
+      if(myKitchenTimer.hasAlert()) {
+        if(BLINKSTATE(BLINKCYCLE_ALERT_FLIP))
+        
+          if( BLINKSTATE(BLINKCYCLE_ALERT))
+            {
+              led7seg.setString(0,timerSlot*2+1,"*_",0);    
+              return;      
+            } else {
+              led7seg.setString(0,timerSlot*2+1,"_*",0); 
+              return;
+            }
+      }
+      else  // not in alert state, just over
       if ( myKitchenTimer.getTimeLeft()<TIMER_CALM_DOWN_TIME || BLINKSTATE(BLINKCYCLE_OVER) ) 
       {
-        led7seg.setString(0,timerSlot*2+1,"__",B10000000);   
-        return;        
+
+       led7seg.setString(0,timerSlot*2+1,"__",B10000000);   
+       return;        
       }
-     }
    }
    /* when here, we are allowed to show the time */
    renderTimeCompact(timerSlot,abs(myKitchenTimer.getTimeLeft()),setDot);
