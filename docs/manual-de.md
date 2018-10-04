@@ -136,6 +136,8 @@ Dies funktioniert in jeder Bediensituation.
 Um einen Timer vorzeitig abzuschalten, oder nach Ablauf der Zeit dessen Nachlaufmessung zu beenden:
 * **Taster** des Timer drücken und für **5 Sekunden halten** -> Auf der Positin des Timers wird kurz "OF" angzeigt. Danach der erscheint die Hauptanzeige und der Timer ist deaktiviert.
 
+Ein Timer deaktiviert sich automatisch nach einer Nachlaufzeit, die dem doppelten seiner Start entspricht +45 Sekunden, maximal aber 90 Minuten . Diese Regel entspringt dem Gedanken, dass spätestens nach der doppelt eingestellten Zeit die zu messende Aktivität entweder komplett erledigt oder aus dem Ruder gelaufen ist. 
+
 ## Timer kopieren
 Es ist möglich von einem laufenden Timer die Zeit zu "Kopieren".
 * **Taster** des gewünschten laufenden Timers drücken von dem die Zeit kopiert werden soll -> Ausführliche Restzeit (oder die Zeit seit nach dessen Ablauf) wird angezeigt. Die Timer-Led blinkt.
