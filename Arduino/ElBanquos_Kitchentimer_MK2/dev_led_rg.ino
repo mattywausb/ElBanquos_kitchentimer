@@ -14,9 +14,9 @@
 #endif
 
 
-#define LEDRG_DATA_PIN 12
-#define LEDRG_LATCH_PIN 11
-#define LEDRG_CLOCK_PIN 10
+#define LEDRG_DATA_PIN 8
+#define LEDRG_LATCH_PIN 7
+#define LEDRG_CLOCK_PIN 6
 
 
 byte current_pattern=0x55;
