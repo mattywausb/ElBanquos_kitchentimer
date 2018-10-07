@@ -4,7 +4,7 @@
   Plays a melody
 
   circuit:
-  - 8 ohm speaker on digital pin 8
+  - 8 ohm speaker on digital pin 5
 
   created 21 Jan 2010
   modified 30 Aug 2011
@@ -18,8 +18,8 @@
 #include "mainSettings.h"
 
 
-#define PIEZO_PIN 5
-#define TRIGGER_BUTTON_PIN 4
+#define SPEAKER_PIN 5
+
 
 #include "pitches.h"
 
@@ -50,8 +50,7 @@ void setup() {
     Serial.begin(9600);
     Serial.println(compile_signature); 
   #endif
-   pinMode(TRIGGER_BUTTON_PIN, INPUT_PULLUP);
-
+ pinMode(LED_BUILTIN,OUTPUT);
  input_setup();
    
 }
@@ -63,6 +62,7 @@ void loop() {
    #ifdef TRACE_ON 
     Serial.println("--- Playing ---"); 
   #endif
+    digitalWrite(LED_BUILTIN,HIGH);
     // iterate over the notes of the melody:
     for (int thisNote = 0; thisNote < NOTE_COUNT; thisNote++) {
       for(int thisDuration = 0; thisDuration<DURATION_COUNT;thisDuration++) {  
@@ -79,6 +79,7 @@ void loop() {
         noTone(5);
       }
     }
+    digitalWrite(LED_BUILTIN,LOW);
 
   #ifdef TRACE_ON 
     Serial.println("--- Melody Complete ---"); 

@@ -7,7 +7,7 @@
 #ifdef TRACE_ON
 #define TRACE_INPUT 
 //#define TRACE_INPUT_HIGH 
-#define TRACE_INPUT_ACCELERATION
+//#define TRACE_INPUT_ACCELERATION
 #endif
 
 /* Encoder constants and variables for IDS tracking function */
@@ -96,8 +96,8 @@ unsigned int button_tick_state = 0;      // current and historized state in the 
 
 /* Patterns for history handling */
 
-#define INPUT_CURRENT_BITS 0x5555
-#define INPUT_PREVIOUS_BITS 0xaaaa
+#define INPUT_CURRENT_BITS 0x0155
+#define INPUT_PREVIOUS_BITS 0x02aa
 
 /* Variables for encoder tracking */
 
@@ -291,9 +291,6 @@ void encoder_pin_b_change_ISR()
 void input_switches_scan_tick()
 {
   bool change_happened=false;
-
-
-
   
   /* regular button scan and encoder crosscheck */
   if (millis() - buttons_last_read_time > INPUT_BUTTON_COOLDOWN)
@@ -369,8 +366,13 @@ void input_switches_scan_tick()
   if (input_encoder_value > input_encoder_rangeMax)      input_encoder_value = input_encoder_wrap ? input_encoder_rangeMin : input_encoder_rangeMax;
   else if (input_encoder_value < input_encoder_rangeMin) input_encoder_value = input_encoder_wrap ? input_encoder_rangeMax : input_encoder_rangeMin;
 
-  if(button_tick_state & INPUT_ALL_BUTTON_STATE_MASK ==0x00)  input_enabled=true; // enable input when all is released and settled
-
+  if((button_tick_state & INPUT_ALL_BUTTON_STATE_MASK) ==0x00)  input_enabled=true; // enable input when all is released and settled
+  #ifdef TRACE_INPUT_HIGH
+    else {
+      Serial.print(F("TRACE_INPUT_HIGH: not settled "));
+      Serial.println(button_tick_state,BIN);
+    }
+  #endif  
   if(change_happened)input_last_change_time = millis(); // Reset the globel age of interaction
 
 
@@ -394,6 +396,6 @@ void input_setup() {
 
   attachInterrupt(digitalPinToInterrupt(ENCODER_PIN_A),encoder_pin_a_change_ISR,CHANGE);
   attachInterrupt(digitalPinToInterrupt(ENCODER_PIN_B),encoder_pin_b_change_ISR,CHANGE);
-  
+ 
   setupComplete = true;
 }
