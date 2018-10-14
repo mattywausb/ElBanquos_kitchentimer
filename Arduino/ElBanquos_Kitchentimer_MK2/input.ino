@@ -6,7 +6,9 @@
 
 #ifdef TRACE_ON
 #define TRACE_INPUT 
-//#define TRACE_INPUT_HIGH 
+//#define TRACE_INPUT_HIGH
+//#define TRACE_INPUT_ANALOG
+//#define TRACE_INPUT_TIMING 
 //#define TRACE_INPUT_ACCELERATION
 #endif
 
@@ -48,11 +50,11 @@ volatile byte input_encoder_acceleration=1;
 
 
 /* Button constants */ 
-const byte switch_pin_list[] = {4,    // BUTTON A SELECT ( ENCODER PUSH)
-                                2,     // Timer 1
-                                3,     // Timer 2
-                                4,     // Timer 3
-                                5      // Timer 4 
+const byte switch_pin_list[] = {4,    //normally 4 BUTTON A SELECT ( ENCODER PUSH)
+                                5,     // Timer 1 // Was changed to 5 due to a bug analysis
+                                2,     // Timer 2
+                                3,     // Timer 3
+                                4      // Timer 4 
                                };
                                 
 #define INPUT_PORT_COUNT sizeof(switch_pin_list)
@@ -118,8 +120,8 @@ unsigned long input_last_change_time = 0;
 int input_getSecondsSinceLastEvent() {
   unsigned long timestamp_difference = (millis() - input_last_change_time) / 1000;
   if (timestamp_difference > 255) return 255;
-#ifdef TRACE_INPUT_HIGH
-  Serial.print(F("input last interaction:"));
+#ifdef TRACE_INPUT_TIMING
+  Serial.print(F("TRACE_INPUT_TIMING:input last interaction:"));
   Serial.println(timestamp_difference);
 #endif
   return timestamp_difference;
@@ -145,8 +147,8 @@ byte input_selectGotReleased()
 
 long input_getCurrentPressDuration()
 {
-  #ifdef TRACE_INPUT_HIGH
-    Serial.print(F("TRACE_INPUT_HIGH:input CurrentPressDuration:"));
+  #ifdef TRACE_INPUT_TIMING
+    Serial.print(F("TRACE_INPUT_TIMING:input CurrentPressDuration:"));
     Serial.println(millis()-last_press_start_time);
   #endif
     
@@ -296,10 +298,22 @@ void input_switches_scan_tick()
   if (millis() - buttons_last_read_time > INPUT_BUTTON_COOLDOWN)
   {
     byte isPressed=0;
+    int analog_value=0;
     buttons_last_read_time = millis();
+    
     for (int i = 0; i <INPUT_PORT_COUNT; i++) { // for all input ports configured
       if(i<INPUT_ANALOG_PORT_INDEX_OFFSET) isPressed=!digitalRead(switch_pin_list[i]);
-      else isPressed = (analogRead(switch_pin_list[i])>INPUT_ANALOG_HIGH_THRESHOLD);
+      else {
+        analog_value=analogRead(switch_pin_list[i]);
+        isPressed = (analog_value>INPUT_ANALOG_HIGH_THRESHOLD);
+        #ifdef TRACE_INPUT_ANALOG
+          if(isPressed)
+          {
+            Serial.print(("TRACE_INPUT_ANALOG:analog value= "));Serial.print(analog_value);
+            Serial.print((" of A"));Serial.println(switch_pin_list[i]);
+          }
+        #endif
+      }
       bitWrite(button_raw_state,i*2,isPressed);
     }
 
@@ -328,7 +342,7 @@ void input_switches_scan_tick()
       change_happened=true;
       last_press_end_time =last_press_start_time=millis();
       #ifdef TRACE_INPUT_HIGH
-        Serial.print(("TRACE_INPUT_HIGH:press detected of "));Serial.println(i);
+        Serial.print(("TRACE_INPUT_HIGH:press of "));Serial.println(i);
       #endif     
     }
     if((button_tick_state & (INPUT_0_BITS<<(i*2))) == INPUT_0_SWITCHED_OFF_PATTERN<<(i*2)) 
@@ -336,7 +350,7 @@ void input_switches_scan_tick()
       last_press_end_time=millis();
       change_happened=true;
       #ifdef TRACE_INPUT_HIGH
-        Serial.println(("TRACE_INPUT_HIGH:release detected"));Serial.println(i);
+        Serial.print(("TRACE_INPUT_HIGH:release of "));Serial.println(i);
       #endif     
     }
   }
@@ -370,7 +384,7 @@ void input_switches_scan_tick()
   #ifdef TRACE_INPUT_HIGH
     else {
       Serial.print(F("TRACE_INPUT_HIGH: not settled "));
-      Serial.println(button_tick_state,BIN);
+      Serial.println(0x8000|button_tick_state,BIN);
     }
   #endif  
   if(change_happened)input_last_change_time = millis(); // Reset the globel age of interaction
