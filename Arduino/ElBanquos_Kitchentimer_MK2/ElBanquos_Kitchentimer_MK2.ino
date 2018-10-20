@@ -16,7 +16,8 @@
 #define PRESS_DURATION_FOR_RESET 2500  // milliseconds you must hold select to disable a timer
 #define PRESS_DURATION_SHORT 500  // milliseconds while a press counts as short 
 #define ALERT_DURATION 45 // Seconds the alert will go without manual ackknowledgement
-#define MAX_OVER_TIME 3600 // Seconds the over time mode will be kept befor complet disabling the timer
+#define MAX_OVER_TIME 5400 // Seconds the over time mode will be kept befor complet disabling the timer
+#define MIN_OVER_TIME 180 // Seconds the over time mode will be kept at least
 
 const long timer_interval_preset[]={1800,1200,330,180}; // 30 min, 20 min, 5'30 min, 3 min (order is right to left)
 
@@ -45,8 +46,8 @@ void enter_IDLE_MODE(){
     Serial.println(F("#IDLE"));
   #endif
   ui_mode=IDLE_MODE;
-  output_clearAllSequence ();
-  input_pauseUntilRelease();
+  output_clearDisplay();
+  input_IgnoreUntilRelease();
 }
 
 void process_IDLE_MODE()
@@ -87,10 +88,11 @@ void process_IDLE_MODE()
   /* Automated disabling after twice of runtime */
   for(int i=0;i<TIMER_COUNT;i++)
   {
-    if(myKitchenTimerList[i].isOver()
-      && ((-myKitchenTimerList[i].getTimeLeft())>ALERT_DURATION+myKitchenTimerList[i].getLastSetTime() 
-          || (-myKitchenTimerList[i].getTimeLeft())>MAX_OVER_TIME) )
-          myKitchenTimerList[i].disable();
+    if(myKitchenTimerList[i].isOver() && -myKitchenTimerList[i].getTimeLeft()>MIN_OVER_TIME)
+    {
+      if (((-myKitchenTimerList[i].getTimeLeft())>MAX_OVER_TIME)
+      || (-myKitchenTimerList[i].getTimeLeft()>(myKitchenTimerList[i].getLastSetTime()*2))) myKitchenTimerList[i].disable();
+    }
   }
 
   output_renderIdleScene(myKitchenTimerList);
@@ -258,7 +260,7 @@ void process_DISPLAY_MODE() {
      } else {
         ui_focussed_timer_index=other_timer_index;  // Switch focus to other timer
         focussed_timer=&myKitchenTimerList[ui_focussed_timer_index];
-                input_pauseUntilRelease();
+                input_IgnoreUntilRelease();
         if(focussed_timer->isDisabled()) 
         {
           enter_IDLE_MODE();  
@@ -301,7 +303,7 @@ void enter_SET_MODE(long preselected_time)
   input_setEncoderRange(0,CONTROL_VALUE_MAX,1,false);   
   input_setEncoderValue(convertTimeToControlvalue(preselected_time));  
   output_clearAllSequence ();
-  input_pauseUntilRelease();
+  input_IgnoreUntilRelease();
 }
 
 void process_SET_MODE()
@@ -372,7 +374,7 @@ void process_SET_MODE()
            {
             ui_focussed_timer_index=other_timer_index;
             focussed_timer=&myKitchenTimerList[ui_focussed_timer_index];
-            input_pauseUntilRelease();
+            input_IgnoreUntilRelease();
            } else {
             output_blockedSequence(myKitchenTimerList,other_timer_index); 
            }       

@@ -6,7 +6,7 @@
 
 #ifdef TRACE_ON
 #define TRACE_INPUT 
-//#define TRACE_INPUT_HIGH
+#define TRACE_INPUT_HIGH
 //#define TRACE_INPUT_ANALOG
 //#define TRACE_INPUT_TIMING 
 //#define TRACE_INPUT_ACCELERATION
@@ -212,7 +212,7 @@ void input_setEncoderRange(int rangeMin, int rangeMax, int stepSize, bool wrap) 
 
 /* Disable input until all buttons have been released */
 
-void input_pauseUntilRelease()
+void input_IgnoreUntilRelease()
 {
   input_enabled=false;
 }

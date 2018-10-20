@@ -1,4 +1,4 @@
-#define TRACE_ON 
+//#define TRACE_ON 
 
 #define TIMER_COUNT 4
 

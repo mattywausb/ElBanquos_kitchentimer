@@ -128,6 +128,7 @@ void output_startupSequence()
     dev_led_rg_show();
     delay(150);
   }
+  output_clearAllSequence ();
 }
 
 void output_clearAllSequence ()
@@ -283,7 +284,7 @@ void renderTimeCompact(byte timerSlot,long currentTime,bool dotState)
    }
 
    if(currentTime>59) {  //Minute + 10 second display mode
-    led7seg.setDigit(0,startSegment,currentTime/60, dotState);
+    led7seg.setDigit(0,startSegment,currentTime/60, 0);
     led7seg.setDigit(0,startSegment-1,(currentTime%60)/10,dotState);
     return;
    }
