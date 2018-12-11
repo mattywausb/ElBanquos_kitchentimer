@@ -13,7 +13,7 @@ When preparing food I have to keep track of multiple countdowns. Even though one
 * Main display mode shows all timers (no need to push a button to see the timers)
 * wide range of intervals (1 second to 6 days (and thats only a coded limit) )
 
-## Easy and intuitive 2 Finger Operations
+## Easy and intuitive 2 finger operations
 * Set and start timer
 * Granularity of stepping adapts to total interval (there is normally no need to scroll over every minute, when the interval is more than an hour)
 * Acknowledge alarm
@@ -37,5 +37,5 @@ When preparing food I have to keep track of multiple countdowns. Even though one
   * Kind of buttons input methods
   * sound generation
 
-# More Details 
-* check the wiki
+# More details 
+* [check the wiki] (https://github.com/mattywausb/ElBanquos_kitchentimer/wiki)
