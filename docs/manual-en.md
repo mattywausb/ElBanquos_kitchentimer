@@ -55,8 +55,8 @@ Example:
 The detailed display is used when selecting the time or when showing detailed information for a timer. 
 There are two formats:
 
-* xx**h**yy.zz - below 24 hours: x hours, yy minutes and zz seconds
-* v**d**xx**h**yy. - above 24 hours: v days, xx hours and yy minutes.
+* xx**h**'yy'zz - below 24 hours: x hours, yy minutes and zz seconds
+* v**d**xx**h**'yy - above 24 hours: v days, xx hours and yy minutes.
 
 Example:
 
