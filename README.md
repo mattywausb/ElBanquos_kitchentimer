@@ -30,6 +30,9 @@ When preparing food I have to keep track of multiple countdowns. Even though one
     * [English](https://mattywausb.github.io/ElBanquos_kitchentimer/docs/manual-en.html)
     * [German](https://mattywausb.github.io/ElBanquos_kitchentimer/docs/manual-de.html)
 
+# What you also need
+* my extended version of the Arduino ledcontrol library: https://github.com/mattywausb/LedControl
+
 # How can you use it
 * You can just build the timer by yourself using the same parts (check the fritzing sketch)
 * The module architecture allows you to excahnge the elements of the interface
