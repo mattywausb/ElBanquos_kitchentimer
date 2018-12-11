@@ -39,6 +39,10 @@ When preparing food I have to keep track of multiple countdowns. Even though one
   * Display type
   * Kind of buttons input methods
   * sound generation
+  
+# Video
+* [Demo and quick guide video](https://youtu.be/dwYkCimMoDo)
+
 
 # More details 
 * [check the wiki] (https://github.com/mattywausb/ElBanquos_kitchentimer/wiki)
