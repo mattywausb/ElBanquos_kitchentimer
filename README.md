@@ -15,13 +15,13 @@ When preparing food I have to keep track of multiple countdowns. Even though one
 
 ## Easy and intuitive 2 finger operations
 * Set and start timer
-* Granularity of stepping adapts to total interval (there is normally no need to scroll over every minute, when the interval is more than an hour)
+* Size of steps adapts to total interval (there is normally no need to scroll over every second, when the interval is more than 5 minutes)
 * Acknowledge alarm
-* Change an alreay running timer (necessary when something irregular happened in the cooking process)
+* Change an alreday running timer (necessary when something irregular happened in the cooking process)
 * put timer on hold
-* dismiss timer
-* check the inital time, the timer started from
-* measure time when timer is over
+* cancel timer
+* check the original time, the timer started from
+* measure time since timer is over
   
 # What you will find in the repository
 * Arduino sketch for the timer
@@ -30,12 +30,19 @@ When preparing food I have to keep track of multiple countdowns. Even though one
     * [English](https://mattywausb.github.io/ElBanquos_kitchentimer/docs/manual-en.html)
     * [German](https://mattywausb.github.io/ElBanquos_kitchentimer/docs/manual-de.html)
 
+# What you also need
+* my extended version of the arduino "ledcontrol" library: https://github.com/mattywausb/LedControl
+
 # How can you use it
 * You can just build the timer by yourself using the same parts (check the fritzing sketch)
 * The module architecture allows you to excahnge the elements of the interface
   * Display type
   * Kind of buttons input methods
   * sound generation
+  
+# Video
+* [Demo and quick guide video](https://youtu.be/dwYkCimMoDo)
+
 
 # More details 
 * [check the wiki] (https://github.com/mattywausb/ElBanquos_kitchentimer/wiki)

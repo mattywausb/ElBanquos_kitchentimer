@@ -43,6 +43,7 @@ The compact display, shows all timer states in paralell. Every timer is represen
     * "°_" or "_°" - timer has alarm
 
 Example:
+
 ![Example](display_examples/t149_t28_1_t31h_t429.jpg)
 
 * Timer 1: 49 = 49 seconds 
@@ -54,10 +55,11 @@ Example:
 The detailed display is used when selecting the time or when showing detailed information for a timer. 
 There are two formats:
 
-* xx**h**yy.zz - below 24 hours: x hours, yy minutes and zz seconds
-* v**d**xx**h**yy. - above 24 hours: v days, xx hours and yy minutes.
+* xx**h**'yy'zz - below 24 hours: x hours, yy minutes and zz seconds
+* v**d**xx**h**'yy - above 24 hours: v days, xx hours and yy minutes.
 
 Example:
+
 ![Example](display_examples/detail_h_to_s_1h4435.jpg)
 
 
