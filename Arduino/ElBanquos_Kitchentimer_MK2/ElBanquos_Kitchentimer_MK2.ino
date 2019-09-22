@@ -13,7 +13,7 @@
 #define DEFAULT_INTERVAL_UP  600   // 10 Minutes as start value when turning upwards 
 #define DEFAULT_INTERVAL_DN  600   // 10 Minutes as start value when turning downwards
 #define UI_FALLBACK_INTERVAL 10   // seconds, ui will fall back to idle wihtout interaction
-#define PRESS_DURATION_FOR_RESET 2500  // milliseconds you must hold select to disable a timer
+#define PRESS_DURATION_FOR_RESET 3000  // milliseconds you must hold select to disable a timer
 #define PRESS_DURATION_SHORT 500  // milliseconds while a press counts as short 
 #define ALERT_DURATION 45 // Seconds the alert will go without manual ackknowledgement
 #define MAX_OVER_TIME 5400 // Seconds the over time mode will be kept befor complet disabling the timer
@@ -212,14 +212,18 @@ void process_DISPLAY_MODE() {
      return;    
    } 
 
-  /* Select Button  hold */
+  /* Select Button  hold -> show start time */
    if( input_selectIsPressed() && input_getCurrentPressDuration()>PRESS_DURATION_SHORT)
    {
     output_renderSetScene_withLastTime(myKitchenTimerList,focussed_timer->getLastSetTime(),ui_focussed_timer_index); 
     return;
    }
 
-  if( input_selectGotReleased() && input_getLastPressDuration()>PRESS_DURATION_SHORT)  return;
+  /* Select Button release -> show current time(set) */
+  if( input_selectGotReleased() && input_getLastPressDuration()>PRESS_DURATION_SHORT) {
+      output_clearDisplay();
+      return;  // Just to omit short button release reaction, Display will come up in next cycle
+  } 
 
   /* Select button short */
   if( input_selectGotReleased() )
