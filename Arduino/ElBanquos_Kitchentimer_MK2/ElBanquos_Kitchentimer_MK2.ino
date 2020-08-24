@@ -1,3 +1,5 @@
+#include <LedControl.h>
+
 
 #include "mainSettings.h"
 #include "kitchenTimer.h"   // Class declaration
@@ -108,6 +110,7 @@ void enter_PRESELECT_MODE(){
     ui_mode=PRESELECT_MODE;
     input_setEncoderRange(0,CONTROL_VALUE_MAX,1,false);  
     input_setEncoderValue(convertTimeToControlvalue(DEFAULT_INTERVAL));
+    output_clearDisplay();
     output_renderPreselectScene(myKitchenTimerList,convertControlvalueToTime(input_getEncoderValue()));    
 }
 
@@ -172,7 +175,6 @@ void enter_DISPLAY_MODE(){
   ui_mode=DISPLAY_MODE;
   ui_button_press_from_previous_mode=true;
   output_clearAllSequence ();
-  
   output_renderSetScene(myKitchenTimerList,myKitchenTimerList[ui_focussed_timer_index].getTimeLeft(),ui_focussed_timer_index);
 }
 
