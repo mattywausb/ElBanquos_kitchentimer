@@ -18,7 +18,7 @@ class KitchenTimer
 
      /* ---- Operations ---- */
 
-     /* Give the Timer a new value to count down from, (will enable alert) */
+     /* Give the Timer a new value in seconds to count down from, (will enable alert) */
      void setInterval(long);
      
      /* start the timer,  */
@@ -36,13 +36,13 @@ class KitchenTimer
 
      /* ---- State information ----*/
      
-     /* get the time left over. (will be negative when time is over ) */
+     /* get the time left over in seconds. (will be negative when time is over ) */
      long getTimeLeft();
 
-     /* get the interval value from the last set call */
+     /* get the interval value in seconds from the last set call */
      long getLastSetTime();
 
-     /* get the interval value from the last start call */
+     /* get the interval value in seconds from the last start call */
      long getLastStartTime();
 
      /* Operation state */
@@ -54,9 +54,9 @@ class KitchenTimer
 
  
   protected:
-     unsigned long reference_time;   // Reference time to get own position in time (0=on hold)  
-     long original_interval; // the interval set originally 
-     long tracked_interval; // the actual interval this timer is tracking (-1 = timer is off)
+     unsigned long reference_time;   // Reference time to get own position in time in milliseconds(0=on hold)  
+     long original_interval; // the interval set originally in seconds
+     long tracked_interval; // the actual interval this timer is tracking in seconds (-1 = timer is off)
      bool alert_enabled; // State of the alert: enabled,  disabled
 };
 

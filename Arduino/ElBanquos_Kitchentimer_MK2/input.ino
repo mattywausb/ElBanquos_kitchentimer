@@ -34,7 +34,7 @@ bool input_encoder_change_event = false;
 
 
 /* Button constants */ 
-const byte switch_pin_list[] = {4,    //normally 4 BUTTON A SELECT ( ENCODER PUSH)
+const byte switch_pin_list[] = {4,    //dial ( ENCODER PUSH)
                                 5,     // Timer 1 // Was changed to 5 due to a bug analysis
                                 2,     // Timer 2
                                 3,     // Timer 3
@@ -130,18 +130,18 @@ int input_getSecondsSinceLastEvent() {
 
 /* ------------- Button events --------------- */
 
-bool input_selectGotPressed()
+bool input_dialGotPressed()
 {
 
   return input_enabled && ((button_tick_state & INPUT_BUTTON_A_BITS) == INPUT_BUTTON_A_GOT_PRESSED_PATTERN);
 }
 
-bool input_selectIsPressed()
+bool input_dialIsPressed()
 {
   return input_enabled && ((button_tick_state & INPUT_BUTTON_A_BITS) == INPUT_BUTTON_A_IS_PRESSED_PATTERN); 
 }
 
-byte input_selectGotReleased()
+byte input_dialGotReleased()
 {
   return input_enabled && ((button_tick_state & INPUT_BUTTON_A_BITS) == INPUT_BUTTON_A_GOT_RELEASED_PATTERN); 
 }
