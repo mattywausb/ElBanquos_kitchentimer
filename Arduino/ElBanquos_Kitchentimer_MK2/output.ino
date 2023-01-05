@@ -5,7 +5,7 @@
 
 #ifdef TRACE_ON
 #define TRACE_OUTPUT_SEQUENCE
-#define TRACE_OUTPUT_HIGH
+//#define TRACE_OUTPUT_HIGH
 #endif
 
 #define LED7SEG_DATA_PIN 12

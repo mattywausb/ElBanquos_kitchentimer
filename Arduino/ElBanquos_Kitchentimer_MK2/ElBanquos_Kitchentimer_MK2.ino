@@ -5,7 +5,7 @@
 #include "kitchenTimer.h"   // Class declaration
 
 #ifdef TRACE_ON
-#define TRACE_CLOCK 
+#define TRACE_MODE 
 //#define DEBUG_SCALE_TABLE 
 #endif
 
@@ -44,7 +44,7 @@ KitchenTimer myKitchenTimerList[TIMER_COUNT];
 /* *************** IDLE_MODE ***************** 
 */
 void enter_IDLE_MODE(){
-  #ifdef TRACE_CLOCK
+  #ifdef TRACE_MODE
     Serial.println(F("#IDLE"));
   #endif
   ui_mode=IDLE_MODE;
@@ -104,7 +104,7 @@ void process_IDLE_MODE()
 /* *************** PRESELECT_MODE ***************** 
 */
 void enter_PRESELECT_MODE(){
-  #ifdef TRACE_CLOCK
+  #ifdef TRACE_MODE
     Serial.println(F("#PRESELECT_MODE"));
   #endif
     ui_mode=PRESELECT_MODE;
@@ -165,7 +165,7 @@ void process_PRESELECT_MODE()
 /* *************** DISPLAY_MODE ***************** 
 */
 void enter_DISPLAY_MODE(){
-  #ifdef TRACE_CLOCK
+  #ifdef TRACE_MODE
     Serial.println(F("#DISPLAY_MODE"));
   #endif
 
@@ -302,7 +302,7 @@ void process_DISPLAY_MODE() {
 
 void enter_SET_MODE(long preselected_time)
 {
-  #ifdef TRACE_CLOCK
+  #ifdef TRACE_MODE
     Serial.println(F("#SET_MODE"));
   #endif
   ui_mode=SET_MODE;
@@ -463,6 +463,9 @@ void setup() {
     Serial.println(compile_signature); 
   #endif
   
+  pinMode(LED_BUILTIN,OUTPUT);
+  digitalWrite(LED_BUILTIN,LOW);   
+
   sound_setup();
   output_setup();
   input_setup(); 

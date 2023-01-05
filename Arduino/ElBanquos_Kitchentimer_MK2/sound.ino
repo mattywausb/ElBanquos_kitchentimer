@@ -1,5 +1,9 @@
 #include "mainSettings.h"
 
+#ifdef TRACE_ON
+//#define TRACE_SOUND
+#endif
+
 #define NOTE_B0  31
 #define NOTE_C1  33
 #define NOTE_CS1 35
@@ -91,9 +95,7 @@
 #define NOTE_DS8 4978
 
 
-#ifdef TRACE_ON
-#define TRACE_SOUND
-#endif
+
 
 
 #define SOUND_OUT_PIN 5
