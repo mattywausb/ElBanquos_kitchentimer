@@ -6,7 +6,7 @@
 
 #ifdef TRACE_ON
 #define TRACE_INPUT 
-#define TRACE_INPUT_BUTTONS
+//#define TRACE_INPUT_BUTTONS
 #define TRACE_INPUT_ENCODER
 //#define TRACE_INPUT_ANALOG
 //#define TRACE_INPUT_TIMING 
@@ -122,7 +122,7 @@ int input_getSecondsSinceLastEvent() {
   unsigned long timestamp_difference = (millis() - input_last_change_time) / 1000;
   if (timestamp_difference > 255) return 255;
 #ifdef TRACE_INPUT_TIMING
-  Serial.print(F("TRACE_INPUT_TIMING:input last interaction:"));
+  Serial.print(F("TRACE_INPUT_TIMING>input last interaction:"));
   Serial.println(timestamp_difference);
 #endif
   return timestamp_difference;
@@ -149,7 +149,7 @@ byte input_dialGotReleased()
 long input_getCurrentPressDuration()
 {
   #ifdef TRACE_INPUT_TIMING
-    Serial.print(F("TRACE_INPUT_TIMING:input CurrentPressDuration:"));
+    Serial.print(F("TRACE_INPUT_TIMING>input CurrentPressDuration:"));
     Serial.println(millis()-last_press_start_time);
   #endif
     
@@ -203,8 +203,8 @@ void input_setEncoderRange(int rangeMin, int rangeMax, int stepSize, bool wrap) 
   input_encoder_rangeShiftValue=input_encoder_rangeMax-input_encoder_rangeMin+1;
   input_encoder_wrap = wrap;
   input_encoder_stepSize = stepSize;
-  #ifdef TRACE_INPUT
-    Serial.print(F("TRACE_INPUT input_setEncoderRange:"));
+  #ifdef TRACE_INPUT_ENCODER
+    Serial.print(F("TRACE_INPUT_ENCODER>input_setEncoderRange:"));
     Serial.print(rangeMin); Serial.print(F("-"));  Serial.print(rangeMax);
     Serial.print(F(" Step ")); Serial.print(stepSize); 
     Serial.print(F(" Wrap ")); Serial.println(wrap, BIN);
@@ -332,7 +332,7 @@ void input_switches_scan_tick()
     }
     encoder_change_value -= tick_encoder_change_value; // remove the transfered value from the tracking
     #ifdef TRACE_INPUT_ENCODER
-        Serial.print(F("TRACE_INPUT_ENCODER input_switches_scan_tick:"));
+        Serial.print(F("TRACE_INPUT_ENCODER>input_switches_scan_tick:"));
         Serial.print(F("\ttick_encoder_change_value=")); Serial.print(tick_encoder_change_value);
         Serial.print(F("\tinput_encoder_value=")); Serial.print(input_encoder_value);
         Serial.print(F("\tencoder_change_value left=")); Serial.println(encoder_change_value);
@@ -342,7 +342,7 @@ void input_switches_scan_tick()
   if((button_tick_state & INPUT_ALL_BUTTON_STATE_MASK) ==0x00)  input_enabled=true; // enable input when all is released and settled
   #ifdef TRACE_INPUT_BUTTON_STATE
     else {
-      Serial.print(F("TRACE_INPUT_BUTTON_STATE: not settled "));
+      Serial.print(F("TRACE_INPUT_BUTTON_STATE>not settled "));
       Serial.println(0x8000|button_tick_state,BIN);
     }
   #endif  

@@ -91,7 +91,7 @@ void process_IDLE_MODE()
        && (myKitchenTimerList[i].getTimeLeft()< -ALERT_DURATION) ) // TODO: Make this longer, when not in IDLE
            {myKitchenTimerList[i].acknowledgeAlert();
            #ifdef TRACE_MAIN_EVENTS
-            Serial.println(F("TRACE_MAIN_EVENTS>alert stopped by duration over"));
+            Serial.println(F("TRACE_MAIN_EVENTS>alert exceeded max duration"));
           #endif
            }
   }
@@ -184,6 +184,8 @@ void process_PRESELECT_MODE()
 void enter_DISPLAY_MODE(){
   #ifdef TRACE_MODE
     Serial.println(F("#DISPLAY_MODE"));
+    Serial.print(F("ui_focussed_timer_index="));Serial.println(ui_focussed_timer_index);
+    Serial.print(F("time left: "));Serial.println(myKitchenTimerList[ui_focussed_timer_index].getTimeLeft());
   #endif
 
   input_setEncoderRange(-200,200,1,false);   // set encoder to track an initial movement 
@@ -296,8 +298,12 @@ void process_DISPLAY_MODE() {
      if(myKitchenTimerList[other_timer_index].hasAlert()){
         myKitchenTimerList[other_timer_index].acknowledgeAlert(); 
         return;
-     } else {
-        ui_focussed_timer_index=other_timer_index;  // Switch focus to other timer
+     } else {  // Switch focus to other timer
+        ui_focussed_timer_index=other_timer_index;  
+        #ifdef TRACE_MODE
+          Serial.print(F("TRACE_MAIN_EVENTS>switched to timer ")); Serial.print(ui_focussed_timer_index);
+          Serial.print(F(" time left: "));Serial.println(myKitchenTimerList[ui_focussed_timer_index].getTimeLeft());
+      #endif
         focussed_timer=&myKitchenTimerList[ui_focussed_timer_index];
                 input_IgnoreUntilRelease();
         if(focussed_timer->isDisabled()) 
@@ -310,7 +316,7 @@ void process_DISPLAY_MODE() {
      } 
    }
   
-  /* Switch to change of running timer, when dial is turned  */
+  /* Switch to setting the current shown, when dial is turned  */
   
   if(input_hasEncoderChangeEvent()) {
     input_getEncoderValue(); // acknowledge the processing of the change to the input module
@@ -390,6 +396,9 @@ void process_SET_MODE()
          if(relative_target_time>1) { // At least 1 second should be left
           focussed_timer->setInterval(relative_target_time);
          } else {  // go back to partner timer if partner timer as not enough time left
+     #ifdef TRACE_MAIN_EVENTS
+                  Serial.print(F("TRACE_MAIN_EVENTS>Blocking start since partner is smaller "));Serial.print(ui_focussed_timer_index);
+     #endif
           output_blockedSequence(myKitchenTimerList,ui_focussed_timer_index);  
           ui_focussed_timer_index=ui_partner_timer_index;
           enter_DISPLAY_MODE();
