@@ -5,14 +5,16 @@
 
 #ifdef TRACE_ON
 #define TRACE_OUTPUT_SEQUENCE
-#define TRACE_OUTPUT_HIGH
+//#define TRACE_OUTPUT_HIGH
 #endif
 
 #define LED7SEG_DATA_PIN 12
 #define LED7SEG_LOAD_PIN 11
 #define LED7SEG_CLK_PIN 10
+#define LED7SEG_DEVICE_COUNT 1
+#define LED7SEG_ROTATION180_FLAG 1
 
-LedControl led7seg=LedControl(LED7SEG_DATA_PIN,LED7SEG_CLK_PIN,LED7SEG_LOAD_PIN,1,1);
+LedControl led7seg=LedControl(LED7SEG_DATA_PIN,LED7SEG_CLK_PIN,LED7SEG_LOAD_PIN,LED7SEG_DEVICE_COUNT,LED7SEG_ROTATION180_FLAG);
 
 #define DISPLAY_ACTIVE true
 #define DISPLAY_INTENSITY 1
@@ -105,8 +107,8 @@ void output_renderSetScene_withLastTime (KitchenTimer myKitchenTimerList[],long 
   #endif
   if(selected_time!=0) 
   {
-    led7seg.setChar(0,7,65,false); // Character A
-    output_renderSetScene(myKitchenTimerList,selected_time,targetTimer);   
+    output_renderSetScene(myKitchenTimerList,selected_time,targetTimer); 
+    led7seg.setChar(0,7,65,false); // Character A  
   } else led7seg.setString(0,7,"A -h----",B00000100);
 }
 
@@ -120,13 +122,26 @@ void output_renderSetScene_withLastTime (KitchenTimer myKitchenTimerList[],long 
 
 void output_startupSequence()
 {
+  char s[9]; // Stringbuffer
+  String compileDate=__DATE__;
+  String compileTime=__TIME__;
   output_clearAllSequence ();
+
+  led7seg.setString(0,7,compileDate.substring(4,6)+compileDate.substring(0,3)+compileDate.substring(9,11),B00100000);
   for(int i=0;i<TIMER_COUNT+2;i++) {
     if(i<TIMER_COUNT)dev_led_rg_set(i, LEDRG_GREEN);
     if(i>0 && i<TIMER_COUNT+1) dev_led_rg_set(i-1,LEDRG_RED);
     if(i>1) dev_led_rg_set(i-2,0);
     dev_led_rg_show();
-    delay(150);
+    delay(250);
+  }
+  led7seg.setString(0,7,compileTime,B00000000);
+  for(int i=0;i<TIMER_COUNT+2;i++) {
+    if(i<TIMER_COUNT)dev_led_rg_set(i, LEDRG_GREEN);
+    if(i>0 && i<TIMER_COUNT+1) dev_led_rg_set(i-1,LEDRG_RED);
+    if(i>1) dev_led_rg_set(i-2,0);
+    dev_led_rg_show();
+    delay(250);
   }
   output_clearAllSequence ();
 }

@@ -1,9 +1,11 @@
+#include <LedControl.h>
+
 
 #include "mainSettings.h"
 #include "kitchenTimer.h"   // Class declaration
 
 #ifdef TRACE_ON
-#define TRACE_CLOCK 
+#define TRACE_MODE 
 //#define DEBUG_SCALE_TABLE 
 #endif
 
@@ -42,7 +44,7 @@ KitchenTimer myKitchenTimerList[TIMER_COUNT];
 /* *************** IDLE_MODE ***************** 
 */
 void enter_IDLE_MODE(){
-  #ifdef TRACE_CLOCK
+  #ifdef TRACE_MODE
     Serial.println(F("#IDLE"));
   #endif
   ui_mode=IDLE_MODE;
@@ -102,12 +104,13 @@ void process_IDLE_MODE()
 /* *************** PRESELECT_MODE ***************** 
 */
 void enter_PRESELECT_MODE(){
-  #ifdef TRACE_CLOCK
+  #ifdef TRACE_MODE
     Serial.println(F("#PRESELECT_MODE"));
   #endif
     ui_mode=PRESELECT_MODE;
     input_setEncoderRange(0,CONTROL_VALUE_MAX,1,false);  
     input_setEncoderValue(convertTimeToControlvalue(DEFAULT_INTERVAL));
+    output_clearDisplay();
     output_renderPreselectScene(myKitchenTimerList,convertControlvalueToTime(input_getEncoderValue()));    
 }
 
@@ -162,7 +165,7 @@ void process_PRESELECT_MODE()
 /* *************** DISPLAY_MODE ***************** 
 */
 void enter_DISPLAY_MODE(){
-  #ifdef TRACE_CLOCK
+  #ifdef TRACE_MODE
     Serial.println(F("#DISPLAY_MODE"));
   #endif
 
@@ -172,7 +175,6 @@ void enter_DISPLAY_MODE(){
   ui_mode=DISPLAY_MODE;
   ui_button_press_from_previous_mode=true;
   output_clearAllSequence ();
-  
   output_renderSetScene(myKitchenTimerList,myKitchenTimerList[ui_focussed_timer_index].getTimeLeft(),ui_focussed_timer_index);
 }
 
@@ -300,7 +302,7 @@ void process_DISPLAY_MODE() {
 
 void enter_SET_MODE(long preselected_time)
 {
-  #ifdef TRACE_CLOCK
+  #ifdef TRACE_MODE
     Serial.println(F("#SET_MODE"));
   #endif
   ui_mode=SET_MODE;
@@ -461,6 +463,9 @@ void setup() {
     Serial.println(compile_signature); 
   #endif
   
+  pinMode(LED_BUILTIN,OUTPUT);
+  digitalWrite(LED_BUILTIN,LOW);   
+
   sound_setup();
   output_setup();
   input_setup(); 
