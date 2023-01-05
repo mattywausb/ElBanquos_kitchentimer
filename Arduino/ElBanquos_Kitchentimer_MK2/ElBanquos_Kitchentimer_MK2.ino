@@ -6,6 +6,7 @@
 
 #ifdef TRACE_ON
 #define TRACE_MODE 
+#define TRACE_MAIN_EVENTS
 //#define DEBUG_SCALE_TABLE 
 #endif
 
@@ -23,8 +24,6 @@
 
 const long timer_interval_preset[]={1800,1200,330,180}; // 30 min, 20 min, 5'30 min, 3 min (order is right to left)
 
-#define MOCKUP_TIMER 0
-
 
 enum UI_MODES {
   IDLE_MODE, 
@@ -35,7 +34,8 @@ enum UI_MODES {
 UI_MODES ui_mode = IDLE_MODE; 
 
 
-byte ui_focussed_timer_index=MOCKUP_TIMER;  // until we have multi timer support we test everything with the mockup
+byte ui_focussed_timer_index=0;  // this  is only relevant in DISPLAY and SET mode and will determined before entering these
+byte ui_partner_timer_index=INDEX_FOR_UNDEFINED_TIMER;  // index of the timer, we refer when dialing in a delta time set
 
 bool ui_button_press_from_previous_mode=false;
 
@@ -50,6 +50,7 @@ void enter_IDLE_MODE(){
   ui_mode=IDLE_MODE;
   output_clearDisplay();
   input_IgnoreUntilRelease();
+  ui_partner_timer_index=INDEX_FOR_UNDEFINED_TIMER;
 }
 
 void process_IDLE_MODE()
@@ -64,6 +65,10 @@ void process_IDLE_MODE()
     {
       if(focussed_timer->hasAlert()){
         focussed_timer->acknowledgeAlert(); 
+        #ifdef TRACE_MAIN_EVENTS
+            Serial.println(F("TRACE_MAIN_EVENTS>alert acknowledged"));
+        #endif
+
       } else {
         if(focussed_timer->isDisabled()) enter_SET_MODE( timer_interval_preset[ui_focussed_timer_index] );  
         else enter_DISPLAY_MODE();
@@ -84,7 +89,11 @@ void process_IDLE_MODE()
   {
     if(myKitchenTimerList[i].hasAlert()
        && (myKitchenTimerList[i].getTimeLeft()< -ALERT_DURATION) ) // TODO: Make this longer, when not in IDLE
-           myKitchenTimerList[i].acknowledgeAlert();
+           {myKitchenTimerList[i].acknowledgeAlert();
+           #ifdef TRACE_MAIN_EVENTS
+            Serial.println(F("TRACE_MAIN_EVENTS>alert stopped by duration over"));
+          #endif
+           }
   }
 
   /* Automated disabling after twice of runtime */
@@ -125,21 +134,29 @@ void process_PRESELECT_MODE()
      return;    
    }
 
-  /* Timer Button */
+  /* Start timer by hitting timer button */
   for(ui_focussed_timer_index=0;ui_focussed_timer_index<TIMER_COUNT;ui_focussed_timer_index++)
   {  
     focussed_timer=&myKitchenTimerList[ui_focussed_timer_index];
     if(input_timerButtonGotReleased(ui_focussed_timer_index) )
     {
       if(focussed_timer->hasAlert()){
-        focussed_timer->acknowledgeAlert(); 
+        focussed_timer->acknowledgeAlert();
+        #ifdef TRACE_MAIN_EVENTS
+            Serial.println(F("TRACE_MAIN_EVENTS>alert acknowledged"));
+        #endif
+
       } else {
         if(focussed_timer->isOver() ||
-           focussed_timer->isDisabled())  // timer has no duty
+           focussed_timer->isDisabled())  // timer is free to use
            {
               focussed_timer->setInterval(convertControlvalueToTime(input_getEncoderValue()));
               focussed_timer->startCounting();
               output_startTimerSequence(myKitchenTimerList,ui_focussed_timer_index);
+              #ifdef TRACE_MAIN_EVENTS
+                  Serial.print(F("TRACE_MAIN_EVENTS>Start Timer "));Serial.print(ui_focussed_timer_index);
+                  Serial.print(F("Interval is "));Serial.println(focussed_timer->getLastStartTime());
+              #endif
               enter_IDLE_MODE();
               return;
            } else {
@@ -150,8 +167,8 @@ void process_PRESELECT_MODE()
     } 
   }
 
-  /* Select Button long */
-  if( input_selectIsPressed() && input_getCurrentPressDuration()>PRESS_DURATION_SHORT)
+  /* Dial Button long */
+  if( input_dialIsPressed() && input_getCurrentPressDuration()>PRESS_DURATION_SHORT)
   {
     enter_IDLE_MODE(); 
     return;
@@ -179,9 +196,8 @@ void enter_DISPLAY_MODE(){
 }
 
 void process_DISPLAY_MODE() {
-  
-   static bool select_short_press=false;
-   
+ 
+
    KitchenTimer *focussed_timer=&myKitchenTimerList[ui_focussed_timer_index];
    
    /* UI Fallback, after brief time of no interaction */
@@ -191,7 +207,7 @@ void process_DISPLAY_MODE() {
      return;    
    }
 
-   /* Button of the timer very long */
+   /* Long press of current timer = Switch timer off */
    if( input_timerButtonIsPressed(ui_focussed_timer_index)
    && input_getCurrentPressDuration()>PRESS_DURATION_FOR_RESET)
    {
@@ -201,34 +217,51 @@ void process_DISPLAY_MODE() {
        return;       
    }
 
-   /* old button press */
+   /* Start partnered setting when current button is hold and another valid timer button got pressed */
+  if( input_timerButtonIsPressed(ui_focussed_timer_index)) {
+    for(byte other_timer_index=0;other_timer_index<TIMER_COUNT;other_timer_index++) {
+      if(other_timer_index==ui_focussed_timer_index) continue;
+      if(input_timerButtonGotPressed(other_timer_index) && 
+        (myKitchenTimerList[other_timer_index].isOver() || myKitchenTimerList[other_timer_index].isDisabled()) ) { // Valid Target
+          ui_partner_timer_index=ui_focussed_timer_index;
+          ui_focussed_timer_index=other_timer_index;
+          #ifdef TRACE_MAIN_EVENTS
+                  Serial.println(F("TRACE_MAIN_EVENTS>Request for partnered setting "));
+          #endif
+          enter_SET_MODE( myKitchenTimerList[ui_partner_timer_index].getTimeLeft()/2 );
+          return;
+      }
+    }
+  }
+
+   /* Catch and ignore the first release of the button, since it triggered the display mode  and should not trigger upcoming events */
    if( ui_button_press_from_previous_mode && !input_timerButtonIsPressed(ui_focussed_timer_index))
    {
     ui_button_press_from_previous_mode=false;
     return;
    }
    
-   /* Button of the timer short */
+   /* Got back to idle when focussed timer button was pressed short */
    if(input_timerButtonGotReleased(ui_focussed_timer_index)&& input_getCurrentPressDuration()<PRESS_DURATION_FOR_RESET ) {
      enter_IDLE_MODE();
      return;    
    } 
 
-  /* Select Button  hold -> show start time */
-   if( input_selectIsPressed() && input_getCurrentPressDuration()>PRESS_DURATION_SHORT)
+  /* Display last time of timeer when dial is pressed long */
+   if( input_dialIsPressed() && input_getCurrentPressDuration()>PRESS_DURATION_SHORT)
    {
     output_renderSetScene_withLastTime(myKitchenTimerList,focussed_timer->getLastSetTime(),ui_focussed_timer_index); 
     return;
    }
 
-  /* Select Button release -> show current time(set) */
-  if( input_selectGotReleased() && input_getLastPressDuration()>PRESS_DURATION_SHORT) {
+  /* Display current time when dial is released again */
+  if( input_dialGotReleased() && input_getLastPressDuration()>PRESS_DURATION_SHORT) {
       output_clearDisplay();
       return;  // Just to omit short button release reaction, Display will come up in next cycle
   } 
 
-  /* Select button short */
-  if( input_selectGotReleased() )
+  /* pause/resume running timer with dial button short, go back to idle if timer is already over */
+  if( input_dialGotReleased() )
   {
       
     if(focussed_timer->isOver())  
@@ -254,7 +287,7 @@ void process_DISPLAY_MODE() {
     } 
   }
   
-   /* Button  of other timer */
+   /* Ackowledge alert of any alerting timer or switch focus to other timer with timer buttons */
   for(int other_timer_index=0;other_timer_index<TIMER_COUNT;other_timer_index++)
   {
     if(other_timer_index==ui_focussed_timer_index) continue;
@@ -277,7 +310,7 @@ void process_DISPLAY_MODE() {
      } 
    }
   
-  /* Encoder change  */
+  /* Switch to change of running timer, when dial is turned  */
   
   if(input_hasEncoderChangeEvent()) {
     input_getEncoderValue(); // acknowledge the processing of the change to the input module
@@ -304,6 +337,9 @@ void enter_SET_MODE(long preselected_time)
 {
   #ifdef TRACE_MODE
     Serial.println(F("#SET_MODE"));
+    Serial.print(F("preselected_time ="));Serial.println(preselected_time);
+    Serial.print(F("ui_focussed_timer_index="));Serial.println(ui_focussed_timer_index);
+    Serial.print(F("ui_partner_timer_index ="));Serial.println(ui_partner_timer_index);
   #endif
   ui_mode=SET_MODE;
   input_setEncoderRange(0,CONTROL_VALUE_MAX,1,false);   
@@ -314,7 +350,6 @@ void enter_SET_MODE(long preselected_time)
 
 void process_SET_MODE()
 {
-   static bool select_short_press=false;
    
    KitchenTimer *focussed_timer=&myKitchenTimerList[ui_focussed_timer_index];
    
@@ -325,8 +360,17 @@ void process_SET_MODE()
      return;    
    }
 
-   /* Button of the timer long */
+   /* Escape set mode by long press of dial */
+   if( input_dialIsPressed() && input_getCurrentPressDuration()>PRESS_DURATION_SHORT)
+   {
+        enter_IDLE_MODE();
+        return;
+   }
 
+  /* ignore irritating edgcase of long press/release of dial */
+  if( input_dialGotReleased() && input_getLastPressDuration()>PRESS_DURATION_SHORT)  return;
+
+   /* Abort timer by pressing the button of the timer very long */
    if( input_timerButtonIsPressed(ui_focussed_timer_index)
    && input_getCurrentPressDuration()>PRESS_DURATION_FOR_RESET)
    {
@@ -336,35 +380,32 @@ void process_SET_MODE()
        return;       
    }
    
-   /* Button of the timer short */
-   if(input_timerButtonGotReleased(ui_focussed_timer_index)&& input_getLastPressDuration()<PRESS_DURATION_SHORT ) 
+   /* Start timer with selected time by short press of timer button or dial */
+   if((input_timerButtonGotReleased(ui_focussed_timer_index) || input_dialGotReleased() )&& input_getLastPressDuration()<PRESS_DURATION_SHORT ) 
    {
-     focussed_timer->setInterval(convertControlvalueToTime(input_getEncoderValue()));
+     if(ui_partner_timer_index==INDEX_FOR_UNDEFINED_TIMER) {  // normal time setting
+         focussed_timer->setInterval(convertControlvalueToTime(input_getEncoderValue()));
+     } else {             // timesetting relative to other timer
+         long relative_target_time= myKitchenTimerList[ui_partner_timer_index].getTimeLeft() - convertControlvalueToTime(input_getEncoderValue());
+         if(relative_target_time>1) { // At least 1 second should be left
+          focussed_timer->setInterval(relative_target_time);
+         } else {  // go back to partner timer if partner timer as not enough time left
+          output_blockedSequence(myKitchenTimerList,ui_focussed_timer_index);  
+          ui_focussed_timer_index=ui_partner_timer_index;
+          enter_DISPLAY_MODE();
+          return;
+         }
+     }
      focussed_timer->startCounting();
+     #ifdef TRACE_MAIN_EVENTS
+                  Serial.print(F("TRACE_MAIN_EVENTS>Start Timer "));Serial.print(ui_focussed_timer_index);
+                  Serial.print(F("Interval is "));Serial.println(focussed_timer->getLastStartTime());
+     #endif
      output_startTimerSequence(myKitchenTimerList,ui_focussed_timer_index);
      enter_IDLE_MODE();
      return;    
    } 
 
-   /* Select Button long */
-   if( input_selectIsPressed() && input_getCurrentPressDuration()>PRESS_DURATION_SHORT)
-   {
-        enter_IDLE_MODE();
-        return;
-   }
-
-  if( input_selectGotReleased() && input_getLastPressDuration()>PRESS_DURATION_SHORT)  return;
-
-  /* Select Button short */
-  if( input_selectGotReleased() )
-  {
-      focussed_timer->setInterval(convertControlvalueToTime(input_getEncoderValue()));
-      focussed_timer->startCounting();
-      output_startTimerSequence(myKitchenTimerList,ui_focussed_timer_index);
-      enter_IDLE_MODE();
-      return;
-  }
-  
 
    /* Button  of other timer */
   for(int other_timer_index=0;other_timer_index<TIMER_COUNT;other_timer_index++)
@@ -372,7 +413,7 @@ void process_SET_MODE()
     if(other_timer_index==ui_focussed_timer_index) continue;
     
     if(input_timerButtonGotPressed(other_timer_index)) {
-      if(myKitchenTimerList[other_timer_index].hasAlert()){
+      if(myKitchenTimerList[other_timer_index].hasAlert()){  // acknowledge alert
         myKitchenTimerList[other_timer_index].acknowledgeAlert(); 
       } else {
         if(myKitchenTimerList[other_timer_index].isOver() ||
@@ -400,8 +441,8 @@ void process_SET_MODE()
  * *********************************************************
  */
 
-/* determine the default preseecltion values, depending on timer state and number 
- *  
+/* 
+ * Translate encoder value into seconds and back. This implementes the escalating step size when intervals get higher
  */
 
 
@@ -481,7 +522,7 @@ void setup() {
   for(long i=0;i<312;i++) {
     timevalue=convertControlvalueToTime(i);
     controlvalue=convertTimeToControlvalue(timevalue);
-    Serial.print(i);
+    Serial.print(i); 
     Serial.print(F(" - "));
     Serial.print(controlvalue);
     Serial.print(F("\t = "));

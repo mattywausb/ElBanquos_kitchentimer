@@ -340,9 +340,9 @@ void input_switches_scan_tick()
   }
  
   if((button_tick_state & INPUT_ALL_BUTTON_STATE_MASK) ==0x00)  input_enabled=true; // enable input when all is released and settled
-  #ifdef TRACE_INPUT_BUTTONS
+  #ifdef TRACE_INPUT_BUTTON_STATE
     else {
-      Serial.print(F("TRACE_INPUT_BUTTONS: not settled "));
+      Serial.print(F("TRACE_INPUT_BUTTON_STATE: not settled "));
       Serial.println(0x8000|button_tick_state,BIN);
     }
   #endif  

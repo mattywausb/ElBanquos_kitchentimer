@@ -1,7 +1,10 @@
  #include "Arduino.h"
  #include "kitchenTimer.h"
+ #include "mainSettings.h"
  
-#define TRACE_KITCHENTIMER
+#ifdef  TRACE_ON
+  //#define TRACE_KITCHENTIMER
+#endif
 
 #define ALERT_ENABLED 1
 #define ALERT_ACTIVE 2

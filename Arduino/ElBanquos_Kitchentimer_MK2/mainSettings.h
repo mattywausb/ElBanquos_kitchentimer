@@ -1,6 +1,7 @@
-//#define TRACE_ON 
+#define TRACE_ON 
 
 #define TIMER_COUNT 4
+#define INDEX_FOR_UNDEFINED_TIMER 255
 
 /* Global constants*/
 #define NO_TIME_SELECTION -1
