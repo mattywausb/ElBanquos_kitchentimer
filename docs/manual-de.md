@@ -160,6 +160,10 @@ Es ist möglich von einem laufenden Timer die Zeit zu "Kopieren".
 * **Taster des "Ziel"-Timers**, auf den der Wert kopiert werden soll drücken (muss ein freier Timer sein) ->Die Timer-Led des anvisierten Timers blinkt.
 * Taster des **"Ziel"-Timers** erneut drücken -> Der Timer startet mit der entsprechenden Zeit. Der Timer von dem die Zeit kopiert wurde, verbleibt in seinem vorigen Zustand.
 
+# Der "Melodiecode" im Alarmton
+Die Melodie des Alarmtons richtet sich nach dem alarmgebenden  Timer wie folgt:
+* Grundmelodie sind 5 gleiche Töne gefolgt von einer 3 Noten langen Pause
+* Der zweite bis vierte Ton der 5 Töne wird je nach alarmieredem Timer anhgehoben. Die Anzahl der Töne vor dem angehobenen Ton gibt die Position des Timers auf dem Bedienfeld an. Sind mehrere Timer im Alarmzustand werden entsprechend alle zugehörigen Töne angehoben.
 
 # Anhang
 ## Stufung der Einstellungsintervalle
@@ -180,6 +184,5 @@ Da bei der Zeitmessung für größere Intervalle eine geringere Genauigkeit akze
     >48h     1 h
 
 
-### Beschleunigung bei schneller Drehung
-Wird der Drehregler sehr schnell gedreht, verdoppelt oder vervierfacht sich der Wert für den jede Raststufe des Reglers steht. Dieses Verhalten wird durch geringeres Drehtempo wieder abgeschaltet, so dass nach einem groben Anwählen der Zielzeit eine exakte Positionierung im Rahmen der oben erklärten Genauigkeitsstufung möglich ist.
+
 
