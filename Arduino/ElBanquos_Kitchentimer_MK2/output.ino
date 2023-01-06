@@ -164,7 +164,8 @@ void output_startTimerSequence(KitchenTimer myKitchenTimerList[],byte ui_focusse
    }
   dev_led_rg_show(); 
   led7seg.setString(0,ui_focussed_timer_index*2+1,"Go",0);
-  delay(1000);    
+  sound_playTimerStartMelody(); // Contains a delay of 140ms
+  delay(860);    // full delay is 1000ms
   
   // IMPROVE manage animation of all other timers
 }

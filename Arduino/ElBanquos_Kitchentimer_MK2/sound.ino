@@ -97,27 +97,28 @@
 
 
 
-
 #define SOUND_OUT_PIN 5
 #define TRACE_MONITOR_LED_PIN LED_BUILTIN
 
-// notes in the melody:
+// notes in the melody in pairs of normal note and highlight note (will be played on position of alarming timer):
 int notes[] = {
-  NOTE_B6, 
-   NOTE_A6,
-   NOTE_CS7
+  NOTE_B6,NOTE_D7,
+   NOTE_A6,NOTE_CS7,
+   NOTE_CS7,NOTE_E7
 }; 
 
-const byte sound_pattern [] {  // TODO: compress this into 2 bit per note or put it to code 
+const byte sound_pattern [] {  // Option for less memory consumption: compress this into 4 bit per note or put it to code 
             1,1,1,1,1,0,0,0,
             1,1,1,1,1,0,0,0,
-            2,2,2,2,2,0,0,0,
-            2,2,2,2,2,0,0,0,
             3,3,3,3,3,0,0,0,
             3,3,3,3,3,0,0,0,
+            5,5,5,5,5,0,0,0,
+            5,5,5,5,5,0,0,0,
             1,1,1,1,1,0,0,0,
             1,1,1,1,1,0,0,0
 };
+
+#define SOUND_PATTERN_RYTHMGROUP_LENGTH 8
 
 #define SOUND_PATTERN_COUNT sizeof(sound_pattern)/sizeof(sound_pattern[0])
 #define NOTE_COUNT sizeof(notes)/sizeof(notes[0])
@@ -151,7 +152,6 @@ void sound_stopAlarmForTimer(byte timer_index)
   if(sound_active_flags==0) // this was the last alarm running
   {
     noTone(SOUND_OUT_PIN);
-    digitalWrite(TRACE_MONITOR_LED_PIN,LOW);
   }
 }
 
@@ -159,9 +159,15 @@ void sound_stopAll(byte timer_index)
 {
   sound_active_flags=0;
   noTone(SOUND_OUT_PIN);
-  digitalWrite(TRACE_MONITOR_LED_PIN,LOW);
 }
 
+void sound_playTimerStartMelody() {  // Contains a delay of 140 ms
+    tone(SOUND_OUT_PIN,NOTE_F6,NOTE_DURATION/2);
+    delay(PAUSE_DURATION/2);
+    tone(SOUND_OUT_PIN,NOTE_A6,NOTE_DURATION/2);
+    delay(PAUSE_DURATION/2);
+    noTone(SOUND_OUT_PIN);
+}
 /* *************************** TICK *************************************
    Must be called every tick of the core loop
    Manages playing the melody in the background 
@@ -171,18 +177,19 @@ void sound_tick()
 {
   if(sound_active_flags==0) return;
 
-  if(millis()-sound_last_tick_time>PAUSE_DURATION) 
+  if(millis()-sound_last_tick_time>PAUSE_DURATION) // this defines the tempo of subsequent notes
   {
     sound_last_tick_time=millis();
-    if(notes[sound_pattern[sound_current_frame]]>0)
+    if(sound_pattern[sound_current_frame]>0)
     {
-      if(sound_pattern[sound_current_frame]>0)
-          tone(SOUND_OUT_PIN, notes[sound_pattern[sound_current_frame]-1], NOTE_DURATION);
-          digitalWrite(TRACE_MONITOR_LED_PIN,HIGH);
+      byte index_in_rythm=sound_current_frame%SOUND_PATTERN_RYTHMGROUP_LENGTH;
+      if(index_in_rythm>0 && index_in_rythm<5 && bitRead(sound_active_flags,4-index_in_rythm)==1) tone(SOUND_OUT_PIN, notes[sound_pattern[sound_current_frame]], NOTE_DURATION);
+      else tone(SOUND_OUT_PIN, notes[sound_pattern[sound_current_frame]-1], NOTE_DURATION);
+      digitalWrite(TRACE_MONITOR_LED_PIN,HIGH);
     } 
     else {
-          noTone(SOUND_OUT_PIN);
-          digitalWrite(TRACE_MONITOR_LED_PIN,LOW);
+      noTone(SOUND_OUT_PIN);
+      digitalWrite(TRACE_MONITOR_LED_PIN,LOW);
     }
     if(++sound_current_frame>=SOUND_PATTERN_COUNT) sound_current_frame=0;
   }
