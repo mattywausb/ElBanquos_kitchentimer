@@ -194,7 +194,7 @@ void enter_DISPLAY_MODE(){
   ui_mode=DISPLAY_MODE;
   ui_button_press_from_previous_mode=true;
   output_clearAllSequence ();
-  output_renderSetScene(myKitchenTimerList,myKitchenTimerList[ui_focussed_timer_index].getTimeLeft(),ui_focussed_timer_index);
+  output_renderSetScene(myKitchenTimerList,myKitchenTimerList[ui_focussed_timer_index].getTimeLeft(),ui_focussed_timer_index,INDEX_FOR_UNDEFINED_TIMER);
 }
 
 void process_DISPLAY_MODE() {
@@ -249,7 +249,7 @@ void process_DISPLAY_MODE() {
      return;    
    } 
 
-  /* Display last time of timeer when dial is pressed long */
+  /* Display last set time of timer when dial is pressed long */
    if( input_dialIsPressed() && input_getCurrentPressDuration()>PRESS_DURATION_SHORT)
    {
     output_renderSetScene_withLastTime(myKitchenTimerList,focussed_timer->getLastSetTime(),ui_focussed_timer_index); 
@@ -332,7 +332,7 @@ void process_DISPLAY_MODE() {
   }
 
   /* Provide output */
-  output_renderSetScene(myKitchenTimerList,focussed_timer->getTimeLeft(),ui_focussed_timer_index);
+  output_renderSetScene(myKitchenTimerList,focussed_timer->getTimeLeft(),ui_focussed_timer_index,INDEX_FOR_UNDEFINED_TIMER);
   
 }
 
@@ -440,7 +440,7 @@ void process_SET_MODE()
   
 
   /* Display the encoder value */
-  output_renderSetScene(myKitchenTimerList,convertControlvalueToTime(input_getEncoderValue()),ui_focussed_timer_index);
+  output_renderSetScene(myKitchenTimerList,convertControlvalueToTime(input_getEncoderValue()),ui_focussed_timer_index,ui_partner_timer_index);
 
 }
 

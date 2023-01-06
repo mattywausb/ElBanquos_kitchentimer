@@ -4,7 +4,7 @@
 #include <LedControl.h>
 
 #ifdef TRACE_ON
-#define TRACE_OUTPUT_SEQUENCE
+//#define TRACE_OUTPUT_SEQUENCE
 //#define TRACE_OUTPUT_HIGH
 #endif
 
@@ -81,22 +81,24 @@ void output_renderPreselectScene(KitchenTimer myKitchenTimerList[],long selected
 
 /* ************ Set scene *************************** */
 
-void output_renderSetScene(KitchenTimer myKitchenTimerList[],long selected_time, byte targetTimer) {
+void output_renderSetScene(KitchenTimer myKitchenTimerList[],long selected_time, byte targetTimer,byte parentTimer) {
   determineBlinkCycles(); 
   renderTimeLong(selected_time);
   
   for(int i=0;i<TIMER_COUNT;i++)
   {
-    if(i!=targetTimer) setLedByTimerStatus(i,myKitchenTimerList[i]);
+    if(i!=targetTimer && i!=parentTimer) setLedByTimerStatus(i,myKitchenTimerList[i]);
     else {
       if((BLINKSTATE(BLINKCYCLE_FOCUS))) 
       {
         if(myKitchenTimerList[i].isOver()) dev_led_rg_set(i,LEDRG_GREEN);
         else setLedByTimerStatus(i,myKitchenTimerList[i]);
       }
-      else dev_led_rg_set(i,0);
+      else dev_led_rg_set(i,LEDRG_OFF);  // force led to be off
     }
   }
+  if(parentTimer== INDEX_FOR_UNDEFINED_TIMER)  led7seg.setChar(0,7,32,false); // Space  
+  else  led7seg.setChar(0,7,80,false); // Character P  
   dev_led_rg_show();
 }
 
@@ -107,7 +109,7 @@ void output_renderSetScene_withLastTime (KitchenTimer myKitchenTimerList[],long 
   #endif
   if(selected_time!=0) 
   {
-    output_renderSetScene(myKitchenTimerList,selected_time,targetTimer); 
+    output_renderSetScene(myKitchenTimerList,selected_time,targetTimer,INDEX_FOR_UNDEFINED_TIMER); 
     led7seg.setChar(0,7,65,false); // Character A  
   } else led7seg.setString(0,7,"A -h----",B00000100);
 }
@@ -157,9 +159,11 @@ void output_startTimerSequence(KitchenTimer myKitchenTimerList[],byte ui_focusse
 {
 
   output_clearDisplay();
-  led7seg.setString(0,ui_focussed_timer_index*2+1,"Go",0);
-  setLedByTimerStatus(ui_focussed_timer_index,myKitchenTimerList[ui_focussed_timer_index]);  
+  for(int i=0;i<TIMER_COUNT;i++)   {
+     setLedByTimerStatus(i,myKitchenTimerList[i]);
+   }
   dev_led_rg_show(); 
+  led7seg.setString(0,ui_focussed_timer_index*2+1,"Go",0);
   delay(1000);    
   
   // IMPROVE manage animation of all other timers

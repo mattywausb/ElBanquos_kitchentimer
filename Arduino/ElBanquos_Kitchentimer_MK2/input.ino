@@ -8,7 +8,7 @@
 #define TRACE_INPUT 
 //#define TRACE_INPUT_BUTTONS
 #define TRACE_INPUT_ENCODER
-//#define TRACE_INPUT_ANALOG
+#define TRACE_INPUT_ANALOG
 //#define TRACE_INPUT_TIMING 
 #endif
 
@@ -43,7 +43,7 @@ const byte switch_pin_list[] = {4,    //dial ( ENCODER PUSH)
                                 
 #define INPUT_PORT_COUNT sizeof(switch_pin_list)
 #define INPUT_ANALOG_PORT_INDEX_OFFSET 1
-#define INPUT_ANALOG_HIGH_THRESHOLD 500
+#define INPUT_ANALOG_HIGH_THRESHOLD 950
 #define INPUT_BUTTON_COOLDOWN 10   // Milliseconds until we accept another state change of the buttons
 
 
