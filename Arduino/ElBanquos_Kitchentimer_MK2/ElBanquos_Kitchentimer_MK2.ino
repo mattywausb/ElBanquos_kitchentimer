@@ -22,7 +22,7 @@
 #define MAX_OVER_TIME 5400 // Seconds the over time mode will be kept befor complet disabling the timer
 #define MIN_OVER_TIME 180 // Seconds the over time mode will be kept at least
 
-const long timer_interval_preset[]={1800,1200,330,180}; // 30 min, 20 min, 5'30 min, 3 min (order is right to left)
+const long timer_interval_preset[]={1800,1200,375,180}; // 30 min, 20 min, 6'15 min, 3 min (order is right to left)
 
 
 enum UI_MODES {
