@@ -12,16 +12,21 @@ Elbanquos Kitchentimer besteht aus folgenden Elementen:
 
 # Schnellstart
 Um einen Timer zu **aktivieren** ist folgendes zu tun
-* Mit dem zentralen Drechknopf die gewünschte Zeit einstellen
-* Taster eines inaktiven* Timers drücken ->  der Timer startet, auf der Displayposition des Timers erscheint kurz "Go",  im Display wird die Restzeit auf der Position des Timers angezeigt, die Timer-LED leuchtet dauerhaft rot.
+* Mit dem zentralen Drehregler die gewünschte Zeit einstellen (beginnt bei 10 Minuten)
+* Taster eines inaktiven* Timers drücken ->  Der Timer startet. Der Timer Taster leuchtet dauerhaft rot.
 
-**Der Timertaster leuchtet grün oder ist nicht beleuchtet.
-Der Alarm kann mit einem Druck auf den Taster des Timers bestätigt werden und wird damit abgeschaltet. Nach 45 Sekunden schaltet sich der Alarm von selbst ab. 
+Für jeden Timer ist eine eigene Laufzeit als Vorgabe gesetzt. Um diese zu nutzen:
+* Taster des gewünschten Timers drücken -> die Vorgabezeit des jeweiligen Timers wird angezeigt und der Taster blinkt grün
+* Mit dem Drehregler bei Bedarf die Zeit anpassen
+* Taster des Timers oder den Drehregler drücken -> Der Timer startet. Der Timer Taster leuchtet dauerhaft rot.
 
-Der Timer befindet sich danach im **Nachlaufmodus**. Die der Timer-Taster leuchtet nicht und im Display wird die, seit dem Alarm verstrichene Zeit, abwechselnd mit "_._" angezeigt. Ab 2 Minuten wird nur noch "_._" angezeigt. Mittels des Timer-Tasters kann die seit dem Alarm verstrichende Zeit abgerufen werden. 
+Ist ein **Timer abgelaufen** ertönt ein Signalton und Taster und Anzeige des Timers blinken sehr schnell.
+Durch drücken des blinkenden Tasters wird der Alarm abgeschaltet. Alternativ schaltet sich der Alarm nach 45 Sekunden von selbst ab. 
 
-Um den Timer komplett zu **deaktivieren** ist folgendes zu tun:
-* Taster des Timers 5 Sekunden halten -> Für den Timer wird kurz "OF angezeigt und der Timer ist danach wieder im Ruhezustand (grün)
+Der Timer befindet sich danach im **Nachlaufmodus**. Die der Timer-Taster ist dunkel und im Display wird die, seit dem Alarm verstrichene Zeit, abwechselnd mit "_._" angezeigt. Ab 2 Minuten wird nur noch "_._" angezeigt. Mittels des Timer-Tasters kann die seit dem Alarm verstrichende Zeit abgerufen werden. 
+
+Um einen Timer (egal ob abgelaufen oder aktiv) zu **deaktivieren** ist folgendes zu tun:
+Taster des Timers 5 Sekunden halten -> Für den Timer wird kurz "OF angezeigt und der Timer ist danach wieder inaktiv (grün)
 
 # Die Zeitanzeige im Detail
 ## Hauptanzeige (Kompakte Darstellung aller Timer parallel)
@@ -63,26 +68,28 @@ Beispiele:
 * 14h22.58 = 14 Stunden, 22 Minuten, 58 Sekunden 
 * 3d 7h29. = 3 Tage, 7 Stunden, 29 Minuten
 
-## Information durch die Timer-LED im Timer-Taster
-* LED dauerhaft **grün**: Der Timer ist deaktiviert oder im Nachlaufmods und steht zum setzen einer neuen Startzeit zur Verfügung 
+## Information durch die LED im Timer-Taster
+* LED dauerhaft **grün**: Der Timer ist inaktiv und steht zum setzen einer neuen Startzeit zur Verfügung 
 * LED dauerhaft **rot**: Der Timer **läuft**
 * LED **blinkt schnell** mit kurzen Pausen: Der Timer hat einen **Alarm**
 * LED **blinkt regelmäßig**: Der Timer ist gerade zur Detailanzeige oder Einstellung **ausgewählt**
 * LED in **rot** erlischt kurz im **"Herzschlagryhtmus"**: Der Timer ist im **Pausemodus**
+* LED **aus**: Der Alarm für den Timer wurde beendet und der Timer ist im Nachlaufmodus. Er steht für einen neuen Start zur Verfügung. 
+
 
 # Die Funktionen im Einzelnen
 Alle Funktionen werden hier ausgehend von der Hauptanzeige(siehe oben) beschrieben. Diese erreicht man im Zweifelsfall immer durch kurzes Warten (15 Sekunden).
 ## Timer einstellen und starten
-Anmerkung vorab: Um auch große Zeitintervalle effizient erreichen zu können passt sich das Einstellintervall situativ an. Dadurch kann nicht für jedes Intervall eine sekundengenaue Einstellung erfolgen (Weitere Details dazu im Anhang "Stufung der Einstellintervalle"). 
+Anmerkung vorab: Um auch große Zeitintervalle effizient erreichen zu können wächst der Zeitabstand pro Schritt des Drehregles mit der insgesamt gewählten Zeit. Dadurch kann nicht für jedes Intervall eine sekundengenaue Einstellung erfolgen (Weitere Details dazu im Anhang "Stufung der Einstellintervalle"). 
 
-### Variante 1 (Schnellstart)
+### Per Drehregler
 * Mit dem **Drehregler** eine Zeit einstellen (Die erste Bewegung des Reglers setzt diese auf 10 Minuten).
 * **Taster** eines **nicht laufenden** Timers (_LED grün oder aus_) **drücken** -> Der Timer wird gestartet.
 
 Solange noch kein Timer ausgewählt wurde, kann die Eingabe durch langes Drücken des Drehreglers abgebrochen werden. 
 Die Eingabe wird ebenfalls abgebrochen, wenn man 15 Sekunden lang keine Bedienhandlung vornimmt.
 
-### Variante 2
+### Direkte Zeitvorwahl je Timer
 * **Taster** eines **deaktivierten**(LED ist grün) Timers drücken -> die für den Timer _vorprogrammierte Vorschlagszeit_ erscheint,Timer-Led blinkt
 * Mit dem **Drehregler** die Zeit anpassen
 * Timer starten indem man auf den **Drehregler** drückt _oder_ erneut die **Taste** des Timers betätigt
@@ -91,12 +98,20 @@ Die Eingabe wird ebenfalls abgebrochen, wenn man 15 Sekunden lang keine Bedienha
 Die Eingabe durch langes drücken des Drehreglers abgebrochen werden. 
 Die Eingabe wird ebenfalls abgebrochen, wenn man 15 Sekunden keine Bedienhandlung vornimmt.
 
-### Variante 3
+### Zeitvorwahl mit abgelaufenem Timer
 * **Taster** eines **nachlaufenden**(LED ist aus) Timers drücken -> die Nachlaufzeit des Timers wird angezeigt,Timer-Led blinkt
 * Die erste Bewegung des **Drehreglers** stellt die Zeit auf die __vorprogrammierte Vorschlagszeit_
 * Danach kann die Zeit weiter angepasst werden
 * Timer starten indem man auf den **Drehregler** drückt _oder_ erneut die **Taste** des Timers betätigt
 * Option:Drückt man stattdessen die Taste eines anderen inaktiven Timers, wird auf diesen als Ziel für die eingestellte Zeit umgeschaltet. Ein erneuter Druck auf dessen Taster oder den Drehknopf startet diesen Timer. Der ursprüngich ausgewählte Timer bleibt dann unberührt.
+
+### Zeitabstand zu laufendem Timer
+Möchte man einen Timer stellen, der eine definierte Zeit __vor__ einem schon laufenden Timer abläuft, ist wie folgt zu verfahren:
+* **Taster** des aktiven Timers, für zu dem man einen Abstand festlegen will **drücken und halten**. 
+* zusätzlich **Taster** des inaktiven Timers drücken, der vor dem schon aktiven Timer ablaufen soll -> Der Taster des aktiven Timers blinkt rot, der Taster des einzustellenden Tasters blinkt grün. In der Zeitanzeige wird die Hälfte der Restzeit des aktiven Timers vorgeschlagen. Mit einem **"P"** in der Anzeige wird angezeigt, dass der "Partnermodus" aktiviert ist
+* Mit dem Drehregler die Restzeit einstellen, die der aktive Timer haben soll, wenn der jetzt eingestellte Timer abläuft.
+* Den zweiten Timer starten, indem man den **Drehregler** drückt oder den Taster des zweiten Timers
+Sollte die Zeit des Ursprungstimers nicht mehr ausreichen, um die gewünschte Zeit zu realisieren, wird der Timer nicht gestartet. Stattdessen wird kurz ein Fehler angezeigt und danach die Ursprungtimer wieder angezeigt. So kann bei Bedarf, dessen ZEit veändert werden, oder das Prozedere für einen zweiten Timer erneut begonnen werden.
 
 ## Timer Restzeit anzeigen
 Um die exakte Restzeit eines Timers anzuzeigen:
