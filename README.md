@@ -12,10 +12,13 @@ When preparing food I have to keep track of multiple countdowns. Even though one
 * Track up to 4 timers (Well... limited by the number of display and interaction elements, you can extend this, with little modification)
 * Main display mode shows all timers (no need to push a button to see the timers)
 * wide range of intervals (1 second to 6 days (and thats only a coded limit) )
+* Interval presets for your major use cases
+* Assistence to set timer in relation to other timer
+* Identity of alarming timer is "coded" in alarm melody
 
 ## Easy and intuitive 2 finger operations
 * Set and start timer
-* Size of steps adapts to total interval (there is normally no need to scroll over every second, when the interval is more than 5 minutes)
+* Size of dial steps adapts to total interval (there is normally no need to scroll over every second, when the interval is more than 5 minutes)
 * Acknowledge alarm
 * Change an alreday running timer (necessary when something irregular happened in the cooking process)
 * put timer on hold
